@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { Toast } from "./components/Toast";
+import { ContentShell } from "./components/ContentShell";
 import { CreateServerView } from "./views/CreateServerView";
 import { ServerView } from "./views/ServerView";
 import { WelcomeView } from "./views/WelcomeView";
@@ -99,35 +100,37 @@ export function App() {
         onCreate={() => (root ? setView("create") : void chooseRoot())}
       />
       <main>
-        {view === "welcome" && <WelcomeView onChooseRoot={chooseRoot} />}
-        {view === "create" && (
-          <CreateServerView
-            versions={versions}
-            onCancel={() => setView(selected ? "server" : "welcome")}
-            onCreate={createServer}
-          />
-        )}
-        {view === "server" && selected && (
-          <ServerView
-            root={root}
-            server={selected}
-            tab={tab}
-            running={running}
-            logs={logs}
-            properties={properties}
-            mods={mods}
-            onTabChange={setTab}
-            onPropertiesChange={setProperties}
-            onNotify={notify}
-            onStart={async () => {
-              await window.blocksmith.start(selected.id);
-              setRunning(true);
-              setLogs("Starting server…\n");
-            }}
-            onStop={() => window.blocksmith.stop(selected.id)}
-            onModsChange={setMods}
-          />
-        )}
+        <ContentShell centerVertically={view === "welcome"}>
+          {view === "welcome" && <WelcomeView onChooseRoot={chooseRoot} />}
+          {view === "create" && (
+            <CreateServerView
+              versions={versions}
+              onCancel={() => setView(selected ? "server" : "welcome")}
+              onCreate={createServer}
+            />
+          )}
+          {view === "server" && selected && (
+            <ServerView
+              root={root}
+              server={selected}
+              tab={tab}
+              running={running}
+              logs={logs}
+              properties={properties}
+              mods={mods}
+              onTabChange={setTab}
+              onPropertiesChange={setProperties}
+              onNotify={notify}
+              onStart={async () => {
+                await window.blocksmith.start(selected.id);
+                setRunning(true);
+                setLogs("Starting server…\n");
+              }}
+              onStop={() => window.blocksmith.stop(selected.id)}
+              onModsChange={setMods}
+            />
+          )}
+        </ContentShell>
       </main>
       <Toast message={toast} />
     </>

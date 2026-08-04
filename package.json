@@ -9,7 +9,7 @@
     "dev": "npm run build:main && concurrently \"vite --host 127.0.0.1\" \"wait-on tcp:5173 && cross-env ELECTRON_RENDERER_URL=http://127.0.0.1:5173 electron .\"",
     "build:main": "tsc -p tsconfig.main.json",
     "build": "npm run build:main && vite build",
-    "test:renderer": "vite build && node --test tests/renderer-build.test.mjs",
+    "test:renderer": "vite build && node --test tests/renderer-*.test.mjs",
     "start": "npm run build && electron .",
     "package:win": "npm run build && electron-builder --win portable"
   },
