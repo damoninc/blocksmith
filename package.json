@@ -2,21 +2,37 @@
   "name": "blocksmith-server-manager",
   "version": "1.0.0",
   "description": "A local Minecraft server manager",
-  "main": "src/main.js",
+  "main": "dist/main/main.js",
   "author": "Damon",
   "license": "MIT",
   "scripts": {
-    "start": "electron .",
-    "package:win": "electron-builder --win portable"
+    "dev": "npm run build:main && concurrently \"vite --host 127.0.0.1\" \"wait-on tcp:5173 && cross-env ELECTRON_RENDERER_URL=http://127.0.0.1:5173 electron .\"",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build": "npm run build:main && vite build",
+    "start": "npm run build && electron .",
+    "package:win": "npm run build && electron-builder --win portable"
   },
   "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "electron": "^39.2.7",
-    "electron-builder": "^26.3.0"
+    "electron-builder": "^26.3.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.6",
+    "wait-on": "^9.0.3"
+  },
+  "dependencies": {
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
   },
   "build": {
     "appId": "com.damon.blocksmith",
     "productName": "Blocksmith",
-    "files": ["src/**/*", "package.json"],
+    "files": ["dist/**/*", "package.json"],
     "win": { "target": ["portable"] }
   }
 }
