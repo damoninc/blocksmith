@@ -1,0 +1,22 @@
+{
+  "name": "blocksmith-server-manager",
+  "version": "1.0.0",
+  "description": "A local Minecraft server manager",
+  "main": "src/main.js",
+  "author": "Damon",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "package:win": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^26.3.0"
+  },
+  "build": {
+    "appId": "com.damon.blocksmith",
+    "productName": "Blocksmith",
+    "files": ["src/**/*", "package.json"],
+    "win": { "target": ["portable"] }
+  }
+}
