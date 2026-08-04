@@ -44,3 +44,14 @@ test("rename and delete are protected by main-process IPC", async () => {
   assert.match(preload, /rename: \(id: string, name: string\)/);
   assert.match(preload, /delete: \(id: string, confirmation: string\)/);
 });
+
+test("start and delete reserve a server before asynchronous work", async () => {
+  const source = await readFile("src/electron/main.ts", "utf8");
+
+  assert.match(source, /const startingServers = new Set<string>\(\)/);
+  assert.match(source, /const deletingServers = new Set<string>\(\)/);
+  assert.match(source, /startingServers\.has\(id\)/);
+  assert.match(source, /deletingServers\.has\(id\)/);
+  assert.match(source, /startingServers\.add\(id\)[\s\S]*await metadata\(id\)/);
+  assert.match(source, /deletingServers\.add\(id\)[\s\S]*await deleteServer/);
+});

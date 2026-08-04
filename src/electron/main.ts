@@ -29,6 +29,8 @@ type CreateInput = {
 let window: BrowserWindow;
 let serverRoot = "";
 const processes = new Map<string, ChildProcessWithoutNullStreams>();
+const startingServers = new Set<string>();
+const deletingServers = new Set<string>();
 type Settings = { serverRoot?: string; javaPath?: string };
 
 const settingsPath = () => path.join(app.getPath("userData"), "settings.json");
@@ -282,8 +284,22 @@ ipcMain.handle("forge:list", async (_, version: string) => {
     .filter((v, i, all) => all.indexOf(v) === i);
 });
 ipcMain.handle("server:create", (_, input: CreateInput) => createServer(input));
-ipcMain.handle("server:rename", (_, id: string, name: string) => renameServer(serverRoot, id, name));
-ipcMain.handle("server:delete", (_, id: string, confirmation: string) => deleteServer(serverRoot, id, confirmation, processes.has(id)));
+ipcMain.handle("server:rename", (_, id: string, name: string) => {
+  if (deletingServers.has(id)) throw new Error("This server is being deleted.");
+  return renameServer(serverRoot, id, name);
+});
+ipcMain.handle("server:delete", async (_, id: string, confirmation: string) => {
+  if (processes.has(id) || startingServers.has(id)) {
+    throw new Error("Stop the running server before deleting it.");
+  }
+  if (deletingServers.has(id)) throw new Error("This server is already being deleted.");
+  deletingServers.add(id);
+  try {
+    await deleteServer(serverRoot, id, confirmation, processes.has(id));
+  } finally {
+    deletingServers.delete(id);
+  }
+});
 ipcMain.handle(
   "server:saveProperties",
   async (
@@ -335,7 +351,10 @@ ipcMain.handle("server:addMod", async (_, id: string) => {
     : result.filePaths.map((file) => path.basename(file));
 });
 ipcMain.handle("server:start", async (_, id: string) => {
-  if (processes.has(id)) return;
+  if (deletingServers.has(id)) throw new Error("This server is being deleted.");
+  if (processes.has(id) || startingServers.has(id)) return;
+  startingServers.add(id);
+  try {
   const server = await metadata(id);
   const java = server.type === "forge" ? "" : await resolveJavaExecutable();
   const command = server.type === "forge" ? "cmd.exe" : java;
@@ -369,6 +388,9 @@ ipcMain.handle("server:start", async (_, id: string) => {
     });
   });
   await started;
+  } finally {
+    startingServers.delete(id);
+  }
 });
 ipcMain.handle("server:stop", (_, id: string) =>
   processes.get(id)?.stdin.write("stop\n"),

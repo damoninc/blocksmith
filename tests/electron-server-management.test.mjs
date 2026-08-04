@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -97,5 +97,24 @@ test("valid deletion removes the complete server folder", async () => {
     await assert.rejects(access(directory));
   } finally {
     await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("rename rejects a server directory junction outside the root", async () => {
+  const root = await mkdtemp(join(tmpdir(), "blocksmith-management-root-"));
+  const outside = await mkdtemp(join(tmpdir(), "blocksmith-management-outside-"));
+  try {
+    await writeFile(
+      join(outside, ".blocksmith.json"),
+      JSON.stringify({ id: "linked", name: "Outside", type: "paper", version: "1.21.8", createdAt: "today", jar: "server.jar" }),
+    );
+    await symlink(outside, join(root, "linked"), "junction");
+
+    await assert.rejects(renameServer(root, "linked", "Changed"), /outside.*root|reparse|symbolic/i);
+    const metadata = JSON.parse(await readFile(join(outside, ".blocksmith.json"), "utf8"));
+    assert.equal(metadata.name, "Outside");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(outside, { recursive: true, force: true });
   }
 });

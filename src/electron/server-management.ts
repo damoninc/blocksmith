@@ -22,15 +22,47 @@ export function serverDirectory(root: string, id: string): string {
 }
 
 async function readMetadata(directory: string): Promise<ServerMetadata> {
+  const metadataPath = path.join(directory, ".blocksmith.json");
+  const metadataStats = await fs.lstat(metadataPath);
+  if (metadataStats.isSymbolicLink()) {
+    throw new Error("Server metadata cannot be a symbolic link or reparse point.");
+  }
+  const canonicalMetadata = await fs.realpath(metadataPath);
+  if (path.dirname(canonicalMetadata) !== directory) {
+    throw new Error("Server metadata resolves outside its server folder.");
+  }
   return JSON.parse(
-    await fs.readFile(path.join(directory, ".blocksmith.json"), "utf8"),
+    await fs.readFile(metadataPath, "utf8"),
   ) as ServerMetadata;
+}
+
+async function canonicalServerDirectory(root: string, id: string): Promise<string> {
+  const lexicalDirectory = serverDirectory(root, id);
+  const directoryStats = await fs.lstat(lexicalDirectory);
+  if (directoryStats.isSymbolicLink()) {
+    throw new Error("Server folder cannot be a symbolic link or reparse point.");
+  }
+  const [canonicalRoot, canonicalDirectory] = await Promise.all([
+    fs.realpath(path.resolve(root)),
+    fs.realpath(lexicalDirectory),
+  ]);
+  const relative = path.relative(canonicalRoot, canonicalDirectory);
+  if (
+    !relative ||
+    relative === ".." ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative) ||
+    relative.includes(path.sep)
+  ) {
+    throw new Error("Server folder resolves outside the configured server root.");
+  }
+  return canonicalDirectory;
 }
 
 export async function renameServer(root: string, id: string, name: string) {
   const trimmedName = name.trim();
   if (!trimmedName) throw new Error("Server name cannot be empty.");
-  const directory = serverDirectory(root, id);
+  const directory = await canonicalServerDirectory(root, id);
   const metadata = await readMetadata(directory);
   if (metadata.id !== id) throw new Error("Server metadata does not match its folder.");
   await fs.writeFile(
@@ -46,7 +78,7 @@ export async function deleteServer(
   confirmation: string,
   running: boolean,
 ): Promise<void> {
-  const directory = serverDirectory(root, id);
+  const directory = await canonicalServerDirectory(root, id);
   if (running) throw new Error("Stop the running server before deleting it.");
   const metadata = await readMetadata(directory);
   if (metadata.id !== id) throw new Error("Server metadata does not match its folder.");
