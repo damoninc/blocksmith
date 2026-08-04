@@ -15,6 +15,8 @@ declare global {
         version: string;
         forgeVersion?: string;
       }): Promise<ServerDetails>;
+      rename(id: string, name: string): Promise<ServerDetails>;
+      delete(id: string, confirmation: string): Promise<void>;
       saveProperties(
         id: string,
         common: CommonServerProperties,

@@ -30,3 +30,17 @@ test("start IPC waits for the child process to spawn successfully", async () => 
   assert.match(source, /child\.once\("spawn", resolve\)/);
   assert.match(source, /await started/);
 });
+
+test("rename and delete are protected by main-process IPC", async () => {
+  const [main, preload] = await Promise.all([
+    readFile("src/electron/main.ts", "utf8"),
+    readFile("src/electron/preload.ts", "utf8"),
+  ]);
+
+  assert.match(main, /ipcMain\.handle\("server:rename"/);
+  assert.match(main, /renameServer\(serverRoot, id, name\)/);
+  assert.match(main, /ipcMain\.handle\("server:delete"/);
+  assert.match(main, /deleteServer\(serverRoot, id, confirmation, processes\.has\(id\)\)/);
+  assert.match(preload, /rename: \(id: string, name: string\)/);
+  assert.match(preload, /delete: \(id: string, confirmation: string\)/);
+});

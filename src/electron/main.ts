@@ -18,6 +18,7 @@ import {
   javaCandidates,
   validateJava,
 } from "./java-resolver";
+import { deleteServer, renameServer } from "./server-management";
 
 type CreateInput = {
   name: string;
@@ -281,6 +282,8 @@ ipcMain.handle("forge:list", async (_, version: string) => {
     .filter((v, i, all) => all.indexOf(v) === i);
 });
 ipcMain.handle("server:create", (_, input: CreateInput) => createServer(input));
+ipcMain.handle("server:rename", (_, id: string, name: string) => renameServer(serverRoot, id, name));
+ipcMain.handle("server:delete", (_, id: string, confirmation: string) => deleteServer(serverRoot, id, confirmation, processes.has(id)));
 ipcMain.handle(
   "server:saveProperties",
   async (
