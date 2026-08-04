@@ -48,6 +48,21 @@ test("merges form and advanced values while preserving comments", () => {
   assert.equal((merged.match(/^resource-pack=/gm) ?? []).length, 1);
 });
 
+test("preserves duplicate advanced entries when saving common fields", () => {
+  const original = "motd=Old\nresource-pack=first\nresource-pack=second\n";
+  const parsed = parseServerProperties(original);
+  const merged = mergeServerProperties(
+    original,
+    { ...parsed.common, motd: "New" },
+    parsed.advanced,
+  );
+
+  assert.deepEqual(merged.match(/^resource-pack=.*$/gm), [
+    "resource-pack=first",
+    "resource-pack=second",
+  ]);
+});
+
 test("formats an address only when server-ip is set", () => {
   assert.equal(
     formatServerAddress({ "server-ip": "192.168.0.5", "server-port": "25570" }),

@@ -58,4 +58,19 @@ test("starting a server switches to Console before invoking Electron", async () 
   const startIndex = source.indexOf("await window.blocksmith.start");
 
   assert.ok(consoleIndex >= 0 && consoleIndex < startIndex);
+  assert.match(source, /setRunningServers/);
+  assert.match(source, /setServerLogs/);
+});
+
+test("async server updates are guarded and file errors stay visible", async () => {
+  const [app, overview, properties] = await Promise.all([
+    readFile("src/renderer/App.tsx", "utf8"),
+    readFile("src/renderer/components/server/OverviewTab.tsx", "utf8"),
+    readFile("src/renderer/components/server/PropertiesTab.tsx", "utf8"),
+  ]);
+
+  assert.match(app, /selectedId\.current === server\.id/);
+  assert.match(overview, /catch \(error\)/);
+  assert.match(overview, /Could not accept the EULA/);
+  assert.match(properties, /trim\(\)\.toLowerCase\(\) === "true"/);
 });

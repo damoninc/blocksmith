@@ -9,9 +9,15 @@ type OverviewTabProps = {
 
 export function OverviewTab({ root, server, onServerChange, onNotify }: OverviewTabProps) {
   const acceptEula = async () => {
-    const updated = await window.blocksmith.setEula(server.id, true);
-    onServerChange(updated);
-    onNotify("EULA accepted.");
+    try {
+      const updated = await window.blocksmith.setEula(server.id, true);
+      onServerChange(updated);
+      onNotify("EULA accepted.");
+    } catch (error) {
+      onNotify(
+        error instanceof Error ? error.message : "Could not accept the EULA.",
+      );
+    }
   };
 
   return (

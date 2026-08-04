@@ -69,16 +69,15 @@ export function mergeServerProperties(
   common: CommonServerProperties,
   advanced: string,
 ): string {
-  const remainingAdvanced = new Map<string, string>();
+  const advancedEntries: { key: string; value: string; used: boolean }[] = [];
   for (const line of advanced.split(/\r?\n/)) {
     const property = propertyLine(line);
     if (property && !commonKeys.has(property.key)) {
-      remainingAdvanced.set(property.key, property.value);
+      advancedEntries.push({ ...property, used: false });
     }
   }
 
   const seenCommon = new Set<string>();
-  const seenAdvanced = new Set<string>();
   const output: string[] = [];
   for (const line of original.split(/\r?\n/)) {
     const property = propertyLine(line);
@@ -93,17 +92,20 @@ export function mergeServerProperties(
       }
       continue;
     }
-    if (remainingAdvanced.has(property.key) && !seenAdvanced.has(property.key)) {
-      output.push(`${property.key}=${remainingAdvanced.get(property.key)}`);
-      seenAdvanced.add(property.key);
+    const replacement = advancedEntries.find(
+      (entry) => !entry.used && entry.key === property.key,
+    );
+    if (replacement) {
+      replacement.used = true;
+      output.push(`${replacement.key}=${replacement.value}`);
     }
   }
 
   for (const key of COMMON_PROPERTY_KEYS) {
     if (!seenCommon.has(key)) output.push(`${key}=${common[key]}`);
   }
-  for (const [key, value] of remainingAdvanced) {
-    if (!seenAdvanced.has(key)) output.push(`${key}=${value}`);
+  for (const entry of advancedEntries) {
+    if (!entry.used) output.push(`${entry.key}=${entry.value}`);
   }
 
   while (output.at(-1) === "") output.pop();

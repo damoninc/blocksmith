@@ -89,7 +89,7 @@ export function PropertiesTab({ server, onServerChange, onNotify }: PropertiesTa
         </label>
         {booleanFields.map(([key, label]) => (
           <label className="toggle" key={key}>
-            <input type="checkbox" checked={properties[key] === "true"} onChange={(event) => change(key, String(event.target.checked))} />
+            <input type="checkbox" checked={properties[key].trim().toLowerCase() === "true"} onChange={(event) => change(key, String(event.target.checked))} />
             <span>{label}</span>
           </label>
         ))}

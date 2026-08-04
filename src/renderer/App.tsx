@@ -15,8 +15,8 @@ export function App() {
   const [versions, setVersions] = useState<string[]>([]);
   const [mods, setMods] = useState<string[]>([]);
   const [tab, setTab] = useState<ServerTab>("overview");
-  const [running, setRunning] = useState(false);
-  const [logs, setLogs] = useState("Server is not running.");
+  const [runningServers, setRunningServers] = useState<Set<string>>(() => new Set());
+  const [serverLogs, setServerLogs] = useState<Record<string, string>>({});
   const [toast, setToast] = useState("");
   const selectedId = useRef<string | null>(null);
 
@@ -26,7 +26,7 @@ export function App() {
   }, []);
 
   const replaceServer = useCallback((server: ServerDetails) => {
-    setSelected(server);
+    if (selectedId.current === server.id) setSelected(server);
     setServers((current) =>
       current.map((item) => (item.id === server.id ? server : item)),
     );
@@ -35,9 +35,9 @@ export function App() {
   const chooseServer = useCallback(async (server: ServerDetails) => {
     selectedId.current = server.id;
     setSelected(server);
-    setMods(await window.blocksmith.mods(server.id));
-    setLogs("Server is not running.");
-    setRunning(false);
+    const foundMods = await window.blocksmith.mods(server.id);
+    if (selectedId.current !== server.id) return;
+    setMods(foundMods);
     setView("server");
     setTab("overview");
   }, []);
@@ -53,7 +53,8 @@ export function App() {
     if (next) {
       selectedId.current = next.id;
       setSelected(next);
-      setMods(await window.blocksmith.mods(next.id));
+      const foundMods = await window.blocksmith.mods(next.id);
+      if (selectedId.current === next.id) setMods(foundMods);
       setView("server");
     } else {
       selectedId.current = null;
@@ -72,13 +73,21 @@ export function App() {
         notify(`Could not load versions: ${error.message}`),
       );
     window.blocksmith.onLog((id, text) => {
-      if (selectedId.current === id) setLogs((previous) => previous + text);
+      setServerLogs((current) => ({
+        ...current,
+        [id]: (current[id] ?? "") + text,
+      }));
     });
     window.blocksmith.onStopped((id, code) => {
-      if (selectedId.current === id) {
-        setRunning(false);
-        setLogs((previous) => `${previous}\nServer stopped (code ${code}).`);
-      }
+      setRunningServers((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+      setServerLogs((current) => ({
+        ...current,
+        [id]: `${current[id] ?? ""}\nServer stopped (code ${code}).`,
+      }));
     });
   }, [notify, reload]);
 
@@ -135,22 +144,33 @@ export function App() {
               root={root}
               server={selected}
               tab={tab}
-              running={running}
-              logs={logs}
+              running={runningServers.has(selected.id)}
+              logs={serverLogs[selected.id] ?? "Server is not running."}
               mods={mods}
               onTabChange={setTab}
               onServerChange={replaceServer}
               onNotify={notify}
               onStart={async () => {
+                const serverId = selected.id;
                 setTab("console");
-                setLogs("Starting server...\n");
+                setServerLogs((current) => ({
+                  ...current,
+                  [serverId]: "Starting server...\n",
+                }));
                 try {
-                  await window.blocksmith.start(selected.id);
-                  setRunning(true);
+                  await window.blocksmith.start(serverId);
+                  setRunningServers((current) => new Set(current).add(serverId));
                 } catch (error) {
                   const message = error instanceof Error ? error.message : "Server startup failed.";
-                  setRunning(false);
-                  setLogs((previous) => `${previous}${message}\n`);
+                  setRunningServers((current) => {
+                    const next = new Set(current);
+                    next.delete(serverId);
+                    return next;
+                  });
+                  setServerLogs((current) => ({
+                    ...current,
+                    [serverId]: `${current[serverId] ?? ""}${message}\n`,
+                  }));
                 }
               }}
               onStop={() => window.blocksmith.stop(selected.id)}
