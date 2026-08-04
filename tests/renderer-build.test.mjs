@@ -75,3 +75,22 @@ test("async server updates are guarded and file errors stay visible", async () =
   assert.match(overview, /className="form-error"/);
   assert.match(properties, /trim\(\)\.toLowerCase\(\) === "true"/);
 });
+
+test("server management uses guarded rename and delete dialogs", async () => {
+  const [view, dialogs] = await Promise.all([
+    readFile("src/renderer/views/ServerView.tsx", "utf8"),
+    readFile(
+      "src/renderer/components/server/ServerManagementDialogs.tsx",
+      "utf8",
+    ),
+  ]);
+
+  assert.match(view, />Rename</);
+  assert.match(view, />Delete</);
+  assert.match(dialogs, /useState\(server\.name\)/);
+  assert.match(dialogs, /Type <strong>\{server\.name\}<\/strong>/);
+  assert.match(dialogs, /confirmation !== server\.name/);
+  assert.match(dialogs, /className="form-error"/);
+  assert.match(dialogs, /window\.blocksmith\.rename/);
+  assert.match(dialogs, /window\.blocksmith\.delete/);
+});

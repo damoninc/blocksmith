@@ -96,6 +96,12 @@ textarea { width: 100%; min-height: 350px; resize: vertical; font: 13px Consolas
 .toggle { align-items: center; grid-template-columns: auto 1fr; align-self: end; min-height: 42px; }
 .toggle input { width: 18px; height: 18px; accent-color: var(--green); }
 .form-error { color: #ffaaa3; background: #442421; border-radius: 6px; padding: 10px; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 30px; background: #070a08cc; }
+.modal { width: min(100%, 480px); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 26px; box-shadow: 0 24px 80px #0009; }
+.modal > p { line-height: 1.5; }
+.modal > label { margin-top: 20px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.delete-warning { color: #ffb7b0; }
 .advanced-editor { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 18px; }
 .advanced-editor summary { cursor: pointer; font-weight: 800; color: var(--green); }
 .advanced-editor .hint { margin: 10px 0; }

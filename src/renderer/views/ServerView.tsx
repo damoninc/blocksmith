@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { ConsoleTab } from "../components/server/ConsoleTab";
 import { ModsTab } from "../components/server/ModsTab";
 import { OverviewTab } from "../components/server/OverviewTab";
 import { PropertiesTab } from "../components/server/PropertiesTab";
+import { ServerManagementDialogs } from "../components/server/ServerManagementDialogs";
 import type { ServerDetails, ServerTab } from "../types";
 
 const tabs: ServerTab[] = ["overview", "properties", "mods", "console"];
@@ -15,6 +17,7 @@ type ServerViewProps = {
   mods: string[];
   onTabChange: (tab: ServerTab) => void;
   onServerChange: (server: ServerDetails) => void;
+  onServerDeleted?: (id: string) => void;
   onNotify: (message: string) => void;
   onStart: () => void;
   onStop: () => void;
@@ -30,11 +33,14 @@ export function ServerView({
   mods,
   onTabChange,
   onServerChange,
+  onServerDeleted,
   onNotify,
   onStart,
   onStop,
   onModsChange,
 }: ServerViewProps) {
+  const [managementMode, setManagementMode] = useState<"rename" | "delete" | null>(null);
+
   return (
     <section>
       <div className="top">
@@ -56,6 +62,8 @@ export function ServerView({
           <button className="danger" disabled={!running} onClick={onStop}>
             Stop
           </button>
+          <button className="outline" onClick={() => setManagementMode("rename")}>Rename</button>
+          <button className="danger" disabled={running} onClick={() => setManagementMode("delete")}>Delete</button>
         </div>
       </div>
       <div className="tabs">
@@ -91,6 +99,15 @@ export function ServerView({
         <ModsTab server={server} mods={mods} onChange={onModsChange} />
       )}
       {tab === "console" && <ConsoleTab logs={logs} />}
+      <ServerManagementDialogs
+        key={server.id}
+        server={server}
+        running={running}
+        mode={managementMode}
+        onClose={() => setManagementMode(null)}
+        onRenamed={onServerChange}
+        onDeleted={(id) => onServerDeleted?.(id)}
+      />
     </section>
   );
 }
