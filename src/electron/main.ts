@@ -2,19 +2,23 @@ import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import {
+  readServerDetails,
+  type ServerDetails,
+  type ServerMetadata,
+  type ServerType,
+} from "./server-details";
+import {
+  mergeServerProperties,
+  type CommonServerProperties,
+} from "./server-properties";
+import {
+  commonJavaRoots,
+  findCommonJavaExecutables,
+  javaCandidates,
+  validateJava,
+} from "./java-resolver";
 
-type ServerType = "vanilla" | "paper" | "fabric" | "forge";
-type Server = {
-  id: string;
-  name: string;
-  type: ServerType;
-  version: string;
-  createdAt: string;
-  jar: string | null;
-  build?: number;
-  loader?: string;
-  forgeVersion?: string;
-};
 type CreateInput = {
   name: string;
   type: ServerType;
@@ -24,6 +28,7 @@ type CreateInput = {
 let window: BrowserWindow;
 let serverRoot = "";
 const processes = new Map<string, ChildProcessWithoutNullStreams>();
+type Settings = { serverRoot?: string; javaPath?: string };
 
 const settingsPath = () => path.join(app.getPath("userData"), "settings.json");
 const folder = (id: string) => path.join(serverRoot, id);
@@ -35,12 +40,16 @@ const paperRequest = {
 };
 async function settings() {
   try {
-    return JSON.parse(await fs.readFile(settingsPath(), "utf8")) as {
-      serverRoot?: string;
-    };
+    return JSON.parse(await fs.readFile(settingsPath(), "utf8")) as Settings;
   } catch {
     return {};
   }
+}
+async function saveSettings(update: Partial<Settings>) {
+  const next = { ...(await settings()), ...update };
+  await fs.mkdir(path.dirname(settingsPath()), { recursive: true });
+  await fs.writeFile(settingsPath(), JSON.stringify(next, null, 2));
+  return next;
 }
 async function fetchJson<T>(url: string, init?: RequestInit) {
   const response = await fetch(url, init);
@@ -55,11 +64,42 @@ async function download(url: string, to: string, init?: RequestInit) {
 async function metadata(id: string) {
   return JSON.parse(
     await fs.readFile(path.join(folder(id), ".blocksmith.json"), "utf8"),
-  ) as Server;
+  ) as ServerMetadata;
 }
-async function runJava(args: string[], cwd: string) {
+async function resolveJavaExecutable(): Promise<string> {
+  const current = await settings();
+  const common = await findCommonJavaExecutables(commonJavaRoots(process.env));
+  const candidates = javaCandidates(
+    current.javaPath,
+    process.env.Path ?? process.env.PATH,
+    common,
+  );
+  for (const candidate of candidates) {
+    if (await validateJava(candidate)) {
+      if (candidate !== current.javaPath) await saveSettings({ javaPath: candidate });
+      return candidate;
+    }
+  }
+
+  const result = await dialog.showOpenDialog(window, {
+    title: "Choose your Java executable",
+    properties: ["openFile"],
+    filters: [{ name: "Java executable", extensions: ["exe"] }],
+  });
+  if (result.canceled || !result.filePaths[0]) {
+    throw new Error("Java was not found. Install Java 21 or choose java.exe to start this server.");
+  }
+  const selected = result.filePaths[0];
+  if (!(await validateJava(selected))) {
+    throw new Error(`The selected Java executable is not valid: ${selected}`);
+  }
+  await saveSettings({ javaPath: selected });
+  return selected;
+}
+
+async function runJava(executable: string, args: string[], cwd: string) {
   return new Promise<void>((resolve, reject) => {
-    const child = spawn("java", args, { cwd, windowsHide: true });
+    const child = spawn(executable, args, { cwd, windowsHide: true });
     let output = "";
     child.stdout.on("data", (data) => (output += data));
     child.stderr.on("data", (data) => (output += data));
@@ -72,7 +112,7 @@ async function runJava(args: string[], cwd: string) {
   });
 }
 
-async function listServers(): Promise<Server[]> {
+async function listServers(): Promise<ServerDetails[]> {
   if (!serverRoot) return [];
   try {
     const entries = await fs.readdir(serverRoot, { withFileTypes: true });
@@ -81,26 +121,26 @@ async function listServers(): Promise<Server[]> {
         .filter((e) => e.isDirectory())
         .map(async (e) => {
           try {
-            return await metadata(e.name);
+            return await readServerDetails(folder(e.name));
           } catch {
             return null;
           }
         }),
     );
     return found
-      .filter((s): s is Server => s !== null)
+      .filter((s): s is ServerDetails => s !== null)
       .sort((a, b) => a.name.localeCompare(b.name));
   } catch {
     return [];
   }
 }
-async function createServer(input: CreateInput): Promise<Server> {
+async function createServer(input: CreateInput): Promise<ServerDetails> {
   if (!serverRoot) throw new Error("Choose a server location first.");
   const id = cleanName(input.name);
   if (!id) throw new Error("Give the server a name.");
   const dir = folder(id);
   await fs.mkdir(dir, { recursive: false });
-  const server: Server = {
+  const server: ServerMetadata = {
     id,
     name: input.name.trim(),
     type: input.type,
@@ -170,7 +210,8 @@ async function createServer(input: CreateInput): Promise<Server> {
         `https://maven.minecraftforge.net/net/minecraftforge/forge/${base}/forge-${base}-installer.jar`,
         installer,
       );
-      await runJava(["-jar", installer, "--installServer"], dir);
+      const java = await resolveJavaExecutable();
+      await runJava(java, ["-jar", installer, "--installServer"], dir);
       server.jar = null;
       server.forgeVersion = input.forgeVersion;
     }
@@ -183,7 +224,7 @@ async function createServer(input: CreateInput): Promise<Server> {
       path.join(dir, ".blocksmith.json"),
       JSON.stringify(server, null, 2),
     );
-    return server;
+    return readServerDetails(dir);
   } catch (error) {
     await fs.rm(dir, { recursive: true, force: true });
     throw error;
@@ -218,7 +259,7 @@ ipcMain.handle("root:choose", async () => {
   if (!result.canceled) {
     serverRoot = result.filePaths[0];
     await fs.mkdir(serverRoot, { recursive: true });
-    await fs.writeFile(settingsPath(), JSON.stringify({ serverRoot }, null, 2));
+    await saveSettings({ serverRoot });
   }
   return serverRoot;
 });
@@ -240,15 +281,29 @@ ipcMain.handle("forge:list", async (_, version: string) => {
     .filter((v, i, all) => all.indexOf(v) === i);
 });
 ipcMain.handle("server:create", (_, input: CreateInput) => createServer(input));
-ipcMain.handle("server:properties", (_, id: string) =>
-  fs.readFile(path.join(folder(id), "server.properties"), "utf8"),
+ipcMain.handle(
+  "server:saveProperties",
+  async (
+    _,
+    id: string,
+    common: CommonServerProperties,
+    advanced: string,
+  ) => {
+    const file = path.join(folder(id), "server.properties");
+    let original = "";
+    try {
+      original = await fs.readFile(file, "utf8");
+    } catch {
+      // A missing file is recreated from the submitted values.
+    }
+    await fs.writeFile(file, mergeServerProperties(original, common, advanced));
+    return readServerDetails(folder(id));
+  },
 );
-ipcMain.handle("server:saveProperties", (_, id: string, text: string) =>
-  fs.writeFile(path.join(folder(id), "server.properties"), text),
-);
-ipcMain.handle("server:eula", (_, id: string, accepted: boolean) =>
-  fs.writeFile(path.join(folder(id), "eula.txt"), `eula=${accepted}\n`),
-);
+ipcMain.handle("server:eula", async (_, id: string, accepted: boolean) => {
+  await fs.writeFile(path.join(folder(id), "eula.txt"), `eula=${accepted}\n`);
+  return readServerDetails(folder(id));
+});
 ipcMain.handle("server:mods", async (_, id: string) => {
   try {
     return (await fs.readdir(path.join(folder(id), "mods"))).filter((f) =>
@@ -279,13 +334,13 @@ ipcMain.handle("server:addMod", async (_, id: string) => {
 ipcMain.handle("server:start", async (_, id: string) => {
   if (processes.has(id)) return;
   const server = await metadata(id);
-  const child =
+  const java = server.type === "forge" ? "" : await resolveJavaExecutable();
+  const command = server.type === "forge" ? "cmd.exe" : java;
+  const args =
     server.type === "forge"
-      ? spawn("run.bat", [], { cwd: folder(id), windowsHide: true })
-      : spawn("java", ["-Xms1G", "-Xmx2G", "-jar", server.jar!, "nogui"], {
-          cwd: folder(id),
-          windowsHide: true,
-        });
+      ? ["/d", "/s", "/c", "run.bat"]
+      : ["-Xms1G", "-Xmx2G", "-jar", server.jar!, "nogui"];
+  const child = spawn(command, args, { cwd: folder(id), windowsHide: true });
   processes.set(id, child);
   child.stdout.on("data", (data) =>
     window.webContents.send("server:log", id, data.toString()),
@@ -293,13 +348,22 @@ ipcMain.handle("server:start", async (_, id: string) => {
   child.stderr.on("data", (data) =>
     window.webContents.send("server:log", id, data.toString()),
   );
-  child.once("close", (code) => {
+  let stopped = false;
+  const reportStopped = (code: number | null) => {
+    if (stopped) return;
+    stopped = true;
     processes.delete(id);
     window.webContents.send("server:stopped", id, code);
+  };
+  child.once("close", reportStopped);
+  child.once("error", (error) => {
+    window.webContents.send(
+      "server:log",
+      id,
+      `Could not start ${command}: ${error.message}\n`,
+    );
+    reportStopped(null);
   });
-  child.once("error", (error) =>
-    window.webContents.send("server:log", id, error.message),
-  );
 });
 ipcMain.handle("server:stop", (_, id: string) =>
   processes.get(id)?.stdin.write("stop\n"),

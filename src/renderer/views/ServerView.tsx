@@ -2,20 +2,19 @@ import { ConsoleTab } from "../components/server/ConsoleTab";
 import { ModsTab } from "../components/server/ModsTab";
 import { OverviewTab } from "../components/server/OverviewTab";
 import { PropertiesTab } from "../components/server/PropertiesTab";
-import type { Server, ServerTab } from "../types";
+import type { ServerDetails, ServerTab } from "../types";
 
 const tabs: ServerTab[] = ["overview", "properties", "mods", "console"];
 
 type ServerViewProps = {
   root: string;
-  server: Server;
+  server: ServerDetails;
   tab: ServerTab;
   running: boolean;
   logs: string;
-  properties: string;
   mods: string[];
   onTabChange: (tab: ServerTab) => void;
-  onPropertiesChange: (properties: string) => void;
+  onServerChange: (server: ServerDetails) => void;
   onNotify: (message: string) => void;
   onStart: () => void;
   onStop: () => void;
@@ -28,10 +27,9 @@ export function ServerView({
   tab,
   running,
   logs,
-  properties,
   mods,
   onTabChange,
-  onPropertiesChange,
+  onServerChange,
   onNotify,
   onStart,
   onStop,
@@ -45,7 +43,7 @@ export function ServerView({
           <h1>{server.name}</h1>
           <p className="muted">
             Minecraft {server.version}
-            {server.build ? ` · Paper build ${server.build}` : ""}
+            {server.build ? ` / Paper build ${server.build}` : ""}
           </p>
         </div>
         <div className="actions">
@@ -74,13 +72,17 @@ export function ServerView({
         ))}
       </div>
       {tab === "overview" && (
-        <OverviewTab root={root} server={server} onNotify={onNotify} />
+        <OverviewTab
+          root={root}
+          server={server}
+          onServerChange={onServerChange}
+          onNotify={onNotify}
+        />
       )}
       {tab === "properties" && (
         <PropertiesTab
           server={server}
-          properties={properties}
-          onChange={onPropertiesChange}
+          onServerChange={onServerChange}
           onNotify={onNotify}
         />
       )}

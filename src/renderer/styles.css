@@ -47,8 +47,10 @@ nav { display: flex; flex-direction: column; gap: 3px; flex: 1; overflow: auto; 
 .server-item { background: none; border: 0; color: var(--text); padding: 12px; text-align: left; border-radius: 7px; cursor: pointer; }
 .server-item:hover, .server-item.selected { background: #273429; }
 .server-item small { display: block; color: var(--muted); margin-top: 4px; }
+.server-item .server-address { color: var(--green); font-family: Consolas, monospace; }
 button { border: 0; border-radius: 7px; padding: 10px 14px; font-weight: 700; color: #102010; background: var(--green); cursor: pointer; }
 button:disabled { opacity: .45; cursor: not-allowed; }
+.accepted, .accepted:disabled { background: #274c2b; color: #9be47b; opacity: 1; }
 .outline { background: transparent; border: 1px solid var(--line); color: var(--text); }
 .new { margin-top: auto; }
 
@@ -88,6 +90,16 @@ input, select, textarea { background: #111812; border: 1px solid var(--line); bo
 .tabtitle { margin-bottom: 22px; }
 .tabtitle p { margin: 0; color: var(--muted); }
 textarea { width: 100%; min-height: 350px; resize: vertical; font: 13px Consolas, monospace; line-height: 1.55; }
+.properties-card { padding-bottom: 20px; }
+.properties-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; }
+.properties-grid .wide { grid-column: 1 / -1; }
+.toggle { align-items: center; grid-template-columns: auto 1fr; align-self: end; min-height: 42px; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--green); }
+.form-error { color: #ffaaa3; background: #442421; border-radius: 6px; padding: 10px; }
+.advanced-editor { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 18px; }
+.advanced-editor summary { cursor: pointer; font-weight: 800; color: var(--green); }
+.advanced-editor .hint { margin: 10px 0; }
+.advanced-editor textarea { min-height: 180px; }
 .overview { line-height: 1.6; }
 .overview h2:not(:first-child) { margin-top: 30px; }
 .overview code { color: var(--muted); word-break: break-all; }

@@ -11,7 +11,8 @@
     "build": "npm run build:main && vite build",
     "test:renderer": "vite build && node --test tests/renderer-*.test.mjs",
     "test:server-creation": "node --test tests/server-creation.test.mjs",
-    "test": "npm run test:renderer && npm run test:server-creation",
+    "test:electron": "npm run build:main && node --test tests/electron-*.test.mjs",
+    "test": "npm run test:electron && npm run test:renderer && npm run test:server-creation",
     "start": "npm run build && electron .",
     "package:win": "npm run build && electron-builder --win portable"
   },

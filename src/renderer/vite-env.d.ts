@@ -1,12 +1,12 @@
 /// <reference types="vite/client" />
-import type { Server, ServerType } from "./types";
+import type { CommonServerProperties, ServerDetails, ServerType } from "./types";
 
 declare global {
   interface Window {
     blocksmith: {
       getRoot(): Promise<string>;
       chooseRoot(): Promise<string>;
-      listServers(): Promise<Server[]>;
+      listServers(): Promise<ServerDetails[]>;
       listVersions(): Promise<string[]>;
       listForge(version: string): Promise<string[]>;
       create(input: {
@@ -14,10 +14,13 @@ declare global {
         type: ServerType;
         version: string;
         forgeVersion?: string;
-      }): Promise<Server>;
-      properties(id: string): Promise<string>;
-      saveProperties(id: string, text: string): Promise<void>;
-      setEula(id: string, accepted: boolean): Promise<void>;
+      }): Promise<ServerDetails>;
+      saveProperties(
+        id: string,
+        common: CommonServerProperties,
+        advanced: string,
+      ): Promise<ServerDetails>;
+      setEula(id: string, accepted: boolean): Promise<ServerDetails>;
       mods(id: string): Promise<string[]>;
       addMod(id: string): Promise<string[]>;
       start(id: string): Promise<void>;

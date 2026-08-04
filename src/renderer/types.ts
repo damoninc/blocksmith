@@ -7,6 +7,31 @@ export type Server = {
   version: string;
   jar: string | null;
   build?: number;
+  loader?: string;
+  forgeVersion?: string;
+};
+
+export type CommonServerProperties = {
+  motd: string;
+  "server-ip": string;
+  "server-port": string;
+  "max-players": string;
+  gamemode: string;
+  difficulty: string;
+  "online-mode": string;
+  pvp: string;
+  "allow-flight": string;
+  "white-list": string;
+  "view-distance": string;
+  "simulation-distance": string;
+  "spawn-protection": string;
+};
+
+export type ServerDetails = Server & {
+  properties: CommonServerProperties;
+  advancedProperties: string;
+  eulaAccepted: boolean;
+  address: string;
 };
 
 export type View = "welcome" | "create" | "server";

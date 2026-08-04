@@ -5,15 +5,14 @@ import { ContentShell } from "./components/ContentShell";
 import { CreateServerView } from "./views/CreateServerView";
 import { ServerView } from "./views/ServerView";
 import { WelcomeView } from "./views/WelcomeView";
-import type { Server, ServerTab, ServerType, View } from "./types";
+import type { ServerDetails, ServerTab, ServerType, View } from "./types";
 
 export function App() {
   const [root, setRoot] = useState("");
-  const [servers, setServers] = useState<Server[]>([]);
-  const [selected, setSelected] = useState<Server | null>(null);
+  const [servers, setServers] = useState<ServerDetails[]>([]);
+  const [selected, setSelected] = useState<ServerDetails | null>(null);
   const [view, setView] = useState<View>("welcome");
   const [versions, setVersions] = useState<string[]>([]);
-  const [properties, setProperties] = useState("");
   const [mods, setMods] = useState<string[]>([]);
   const [tab, setTab] = useState<ServerTab>("overview");
   const [running, setRunning] = useState(false);
@@ -26,6 +25,23 @@ export function App() {
     window.setTimeout(() => setToast(""), 3500);
   }, []);
 
+  const replaceServer = useCallback((server: ServerDetails) => {
+    setSelected(server);
+    setServers((current) =>
+      current.map((item) => (item.id === server.id ? server : item)),
+    );
+  }, []);
+
+  const chooseServer = useCallback(async (server: ServerDetails) => {
+    selectedId.current = server.id;
+    setSelected(server);
+    setMods(await window.blocksmith.mods(server.id));
+    setLogs("Server is not running.");
+    setRunning(false);
+    setView("server");
+    setTab("overview");
+  }, []);
+
   const reload = useCallback(async () => {
     const [serverRoot, found] = await Promise.all([
       window.blocksmith.getRoot(),
@@ -33,6 +49,18 @@ export function App() {
     ]);
     setRoot(serverRoot);
     setServers(found);
+    const next = found.find(server => server.id === selectedId.current) ?? found[0];
+    if (next) {
+      selectedId.current = next.id;
+      setSelected(next);
+      setMods(await window.blocksmith.mods(next.id));
+      setView("server");
+    } else {
+      selectedId.current = null;
+      setSelected(null);
+      setMods([]);
+      setView("welcome");
+    }
   }, []);
 
   useEffect(() => {
@@ -62,17 +90,6 @@ export function App() {
     }
   };
 
-  const chooseServer = async (server: Server) => {
-    selectedId.current = server.id;
-    setSelected(server);
-    setProperties(await window.blocksmith.properties(server.id));
-    setMods(await window.blocksmith.mods(server.id));
-    setLogs("Server is not running.");
-    setRunning(false);
-    setView("server");
-    setTab("overview");
-  };
-
   const createServer = async (input: {
     name: string;
     type: ServerType;
@@ -81,8 +98,12 @@ export function App() {
   }) => {
     try {
       const server = await window.blocksmith.create(input);
+      setServers((current) =>
+        [...current.filter((item) => item.id !== server.id), server].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        ),
+      );
       notify("Server created. Accept the EULA, then start it.");
-      await reload();
       await chooseServer(server);
     } catch (error) {
       notify(error instanceof Error ? error.message : "Server creation failed.");
@@ -116,15 +137,21 @@ export function App() {
               tab={tab}
               running={running}
               logs={logs}
-              properties={properties}
               mods={mods}
               onTabChange={setTab}
-              onPropertiesChange={setProperties}
+              onServerChange={replaceServer}
               onNotify={notify}
               onStart={async () => {
-                await window.blocksmith.start(selected.id);
-                setRunning(true);
-                setLogs("Starting server…\n");
+                setTab("console");
+                setLogs("Starting server...\n");
+                try {
+                  await window.blocksmith.start(selected.id);
+                  setRunning(true);
+                } catch (error) {
+                  const message = error instanceof Error ? error.message : "Server startup failed.";
+                  setRunning(false);
+                  setLogs((previous) => `${previous}${message}\n`);
+                }
               }}
               onStop={() => window.blocksmith.stop(selected.id)}
               onModsChange={setMods}

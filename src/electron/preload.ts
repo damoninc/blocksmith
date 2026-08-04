@@ -6,9 +6,8 @@ contextBridge.exposeInMainWorld("blocksmith", {
   listVersions: () => ipcRenderer.invoke("versions:list"),
   listForge: (version: string) => ipcRenderer.invoke("forge:list", version),
   create: (input: unknown) => ipcRenderer.invoke("server:create", input),
-  properties: (id: string) => ipcRenderer.invoke("server:properties", id),
-  saveProperties: (id: string, text: string) =>
-    ipcRenderer.invoke("server:saveProperties", id, text),
+  saveProperties: (id: string, common: unknown, advanced: string) =>
+    ipcRenderer.invoke("server:saveProperties", id, common, advanced),
   setEula: (id: string, accepted: boolean) =>
     ipcRenderer.invoke("server:eula", id, accepted),
   mods: (id: string) => ipcRenderer.invoke("server:mods", id),

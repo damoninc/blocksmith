@@ -1,11 +1,11 @@
-import type { Server } from "../types";
+import type { ServerDetails } from "../types";
 
 type SidebarProps = {
   root: string;
-  servers: Server[];
+  servers: ServerDetails[];
   selectedId?: string;
   onChooseRoot: () => void;
-  onChooseServer: (server: Server) => void;
+  onChooseServer: (server: ServerDetails) => void;
   onCreate: () => void;
 };
 
@@ -37,13 +37,14 @@ export function Sidebar({
           >
             {server.name}
             <small>
-              {server.type} · {server.version}
+              {server.type} / {server.version}
             </small>
+            {server.address && <small className="server-address">{server.address}</small>}
           </button>
         ))}
       </nav>
       <button className="new" onClick={onCreate}>
-        ＋ Create server
+        + Create server
       </button>
     </aside>
   );
