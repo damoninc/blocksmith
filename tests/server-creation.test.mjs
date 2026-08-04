@@ -12,27 +12,14 @@ test("Paper creation uses the current v3 stable download contract", async () => 
   assert.match(source, /downloads\["server:default"\]\.url/);
 });
 
-test("Forge build listing uses official Maven metadata with useful failures", async () => {
+test("Forge IPC uses the metadata helper without the legacy HTML scraper", async () => {
   const source = await readFile("src/electron/main.ts", "utf8");
 
   assert.match(
     source,
-    /import \{ forgeBuildsForMinecraft \} from "\.\/forge-metadata";/,
+    /import \{ fetchForgeBuildsForMinecraft \} from "\.\/forge-builds";/,
   );
-  assert.match(
-    source,
-    /fetch\(\s*"https:\/\/maven\.minecraftforge\.net\/net\/minecraftforge\/forge\/maven-metadata\.xml"\s*,?\s*\)/,
-  );
-  assert.match(source, /if \(!response\.ok\)/);
-  assert.match(
-    source,
-    /Forge build request failed \(\$\{response\.status\}\)\./,
-  );
-  assert.match(source, /forgeBuildsForMinecraft\(text, version\)/);
-  assert.match(
-    source,
-    /No Forge builds are available for Minecraft \$\{version\}\./,
-  );
+  assert.match(source, /ipcMain\.handle\("forge:list",[\s\S]*fetchForgeBuildsForMinecraft\(version\)/);
   assert.doesNotMatch(source, /index_\$\{version\}\.html/);
   assert.doesNotMatch(source, /matchAll\(\/\(\[0-9\]\+\\\.\[0-9\]\+\\\.\[0-9\]\+\)/);
 });

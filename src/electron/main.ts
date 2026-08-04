@@ -19,7 +19,7 @@ import {
   validateJava,
 } from "./java-resolver";
 import { deleteServer, renameServer } from "./server-management";
-import { forgeBuildsForMinecraft } from "./forge-metadata";
+import { fetchForgeBuildsForMinecraft } from "./forge-builds";
 
 type CreateInput = {
   name: string;
@@ -274,20 +274,9 @@ ipcMain.handle("versions:list", async () => {
   );
   return m.versions.filter((v) => v.type === "release").map((v) => v.id);
 });
-ipcMain.handle("forge:list", async (_, version: string) => {
-  const response = await fetch(
-    "https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml",
-  );
-  if (!response.ok) {
-    throw new Error(`Forge build request failed (${response.status}).`);
-  }
-  const text = await response.text();
-  const builds = forgeBuildsForMinecraft(text, version);
-  if (builds.length === 0) {
-    throw new Error(`No Forge builds are available for Minecraft ${version}.`);
-  }
-  return builds;
-});
+ipcMain.handle("forge:list", (_, version: string) =>
+  fetchForgeBuildsForMinecraft(version),
+);
 ipcMain.handle("server:create", (_, input: CreateInput) => createServer(input));
 ipcMain.handle("server:rename", (_, id: string, name: string) => {
   if (deletingServers.has(id)) throw new Error("This server is being deleted.");
