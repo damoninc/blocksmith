@@ -19,6 +19,13 @@ type CreateServerViewProps = {
   }) => Promise<void>;
 };
 
+type ForgeDiscovery = {
+  version: string;
+  builds: string[];
+  loading: boolean;
+  error: string;
+};
+
 export function CreateServerView({
   versions,
   onCancel,
@@ -26,10 +33,22 @@ export function CreateServerView({
 }: CreateServerViewProps) {
   const [type, setType] = useState<ServerType>("vanilla");
   const [version, setVersion] = useState(versions[0] ?? "");
-  const [forgeBuilds, setForgeBuilds] = useState<string[]>([]);
-  const [forgeError, setForgeError] = useState("");
-  const [loadingForge, setLoadingForge] = useState(false);
+  const [forgeDiscovery, setForgeDiscovery] = useState<ForgeDiscovery>({
+    version: "",
+    builds: [],
+    loading: false,
+    error: "",
+  });
   const [creating, setCreating] = useState(false);
+  const forgeCurrent =
+    type === "forge" && forgeDiscovery.version === version;
+  const forgeBuilds = forgeCurrent ? forgeDiscovery.builds : [];
+  const forgeError = forgeCurrent ? forgeDiscovery.error : "";
+  const loadingForge =
+    type === "forge" && (!forgeCurrent || forgeDiscovery.loading);
+  const forgeReady =
+    type !== "forge" ||
+    (forgeCurrent && !forgeDiscovery.loading && forgeBuilds.length > 0);
 
   useEffect(() => {
     if (!version && versions.length) setVersion(versions[0]);
@@ -37,39 +56,39 @@ export function CreateServerView({
 
   useEffect(() => {
     if (type !== "forge" || !version) {
-      setForgeBuilds([]);
-      setForgeError("");
-      setLoadingForge(false);
+      setForgeDiscovery({ version: "", builds: [], loading: false, error: "" });
       return;
     }
 
     let active = true;
-    setForgeBuilds([]);
-    setForgeError("");
-    setLoadingForge(true);
+    setForgeDiscovery({ version, builds: [], loading: true, error: "" });
     window.blocksmith
       .listForge(version)
       .then((builds) => {
         if (active) {
-          setForgeBuilds(builds);
-          if (builds.length === 0) {
-            setForgeError(
-              `No Forge builds are available for Minecraft ${version}.`,
-            );
-          }
+          setForgeDiscovery({
+            version,
+            builds,
+            loading: false,
+            error:
+              builds.length === 0
+                ? `No Forge builds are available for Minecraft ${version}.`
+                : "",
+          });
         }
       })
       .catch((error: unknown) => {
         if (active) {
-          setForgeError(
-            error instanceof Error
-              ? error.message
-              : "Could not load Forge builds.",
-          );
+          setForgeDiscovery({
+            version,
+            builds: [],
+            loading: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Could not load Forge builds.",
+          });
         }
-      })
-      .finally(() => {
-        if (active) setLoadingForge(false);
       });
 
     return () => {
@@ -79,6 +98,7 @@ export function CreateServerView({
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (type === "forge" && !forgeReady) return;
     const data = new FormData(event.currentTarget);
     setCreating(true);
     try {
@@ -140,10 +160,12 @@ export function CreateServerView({
           </label>
         </div>
         {type === "forge" && (
-          <label>
+          <label aria-busy={loadingForge}>
             Forge build
             {loadingForge ? (
-              <span className="hint">Loading Forge builds…</span>
+              <span className="hint" role="status" aria-live="polite">
+                Loading Forge builds…
+              </span>
             ) : forgeError ? (
               <span className="form-error" role="alert">
                 {forgeError}
@@ -158,14 +180,7 @@ export function CreateServerView({
           </label>
         )}
         <p className="hint">{descriptions[type]}</p>
-        <button
-          className="primary"
-          disabled={
-            creating ||
-            (type === "forge" &&
-              (loadingForge || forgeBuilds.length === 0))
-          }
-        >
+        <button className="primary" disabled={creating || !forgeReady}>
           {creating ? "Creating server…" : "Download & create server"}
         </button>
       </form>
