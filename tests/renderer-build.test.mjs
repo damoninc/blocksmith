@@ -72,5 +72,6 @@ test("async server updates are guarded and file errors stay visible", async () =
   assert.match(app, /selectedId\.current === server\.id/);
   assert.match(overview, /catch \(error\)/);
   assert.match(overview, /Could not accept the EULA/);
+  assert.match(overview, /className="form-error"/);
   assert.match(properties, /trim\(\)\.toLowerCase\(\) === "true"/);
 });

@@ -73,6 +73,7 @@ export function ServerView({
       </div>
       {tab === "overview" && (
         <OverviewTab
+          key={server.id}
           root={root}
           server={server}
           onServerChange={onServerChange}

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ServerDetails } from "../../types";
 
 type OverviewTabProps = {
@@ -8,15 +9,18 @@ type OverviewTabProps = {
 };
 
 export function OverviewTab({ root, server, onServerChange, onNotify }: OverviewTabProps) {
+  const [error, setError] = useState("");
+
   const acceptEula = async () => {
     try {
       const updated = await window.blocksmith.setEula(server.id, true);
       onServerChange(updated);
+      setError("");
       onNotify("EULA accepted.");
     } catch (error) {
-      onNotify(
-        error instanceof Error ? error.message : "Could not accept the EULA.",
-      );
+      const detail = error instanceof Error ? error.message : "The EULA file could not be updated.";
+      setError(`Could not accept the EULA: ${detail}`);
+      onNotify("Could not accept the EULA.");
     }
   };
 
@@ -27,6 +31,7 @@ export function OverviewTab({ root, server, onServerChange, onNotify }: Overview
         By starting the server, you confirm you agree to the{" "}
         <a href="https://aka.ms/MinecraftEULA">Minecraft EULA</a>.
       </p>
+      {error && <p className="form-error">{error}</p>}
       {server.eulaAccepted ? (
         <button className="accepted" disabled>
           {"\u2713 Accepted"}

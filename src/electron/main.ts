@@ -356,14 +356,16 @@ ipcMain.handle("server:start", async (_, id: string) => {
     window.webContents.send("server:stopped", id, code);
   };
   child.once("close", reportStopped);
-  child.once("error", (error) => {
-    window.webContents.send(
-      "server:log",
-      id,
-      `Could not start ${command}: ${error.message}\n`,
-    );
-    reportStopped(null);
+  const started = new Promise<void>((resolve, reject) => {
+    child.once("spawn", resolve);
+    child.once("error", (error) => {
+      const message = `Could not start ${command}: ${error.message}`;
+      window.webContents.send("server:log", id, `${message}\n`);
+      reportStopped(null);
+      reject(new Error(message));
+    });
   });
+  await started;
 });
 ipcMain.handle("server:stop", (_, id: string) =>
   processes.get(id)?.stdin.write("stop\n"),

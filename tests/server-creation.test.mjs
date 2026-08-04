@@ -23,3 +23,10 @@ test("create form shows and locks its asynchronous creation state", async () => 
   assert.match(source, /disabled=\{creating\}/);
   assert.match(source, /creating \? "Creating server…"/);
 });
+
+test("start IPC waits for the child process to spawn successfully", async () => {
+  const source = await readFile("src/electron/main.ts", "utf8");
+
+  assert.match(source, /child\.once\("spawn", resolve\)/);
+  assert.match(source, /await started/);
+});
