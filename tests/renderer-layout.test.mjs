@@ -11,5 +11,7 @@ test("renderer uses a centered desktop content shell", async () => {
   assert.match(css, /\.content-shell\{[^}]*max-width:850px/);
   assert.match(css, /\.content-shell\{[^}]*margin:0 auto/);
   assert.match(css, /aside\{[^}]*flex:0 0 280px/);
+  assert.match(css, /#root\{[^}]*display:flex/);
+  assert.match(css, /#root\{[^}]*width:100%/);
   assert.doesNotMatch(css, /@media/);
 });
