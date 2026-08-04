@@ -12,6 +12,31 @@ test("Paper creation uses the current v3 stable download contract", async () => 
   assert.match(source, /downloads\["server:default"\]\.url/);
 });
 
+test("Forge build listing uses official Maven metadata with useful failures", async () => {
+  const source = await readFile("src/electron/main.ts", "utf8");
+
+  assert.match(
+    source,
+    /import \{ forgeBuildsForMinecraft \} from "\.\/forge-metadata";/,
+  );
+  assert.match(
+    source,
+    /fetch\(\s*"https:\/\/maven\.minecraftforge\.net\/net\/minecraftforge\/forge\/maven-metadata\.xml"\s*,?\s*\)/,
+  );
+  assert.match(source, /if \(!response\.ok\)/);
+  assert.match(
+    source,
+    /Forge build request failed \(\$\{response\.status\}\)\./,
+  );
+  assert.match(source, /forgeBuildsForMinecraft\(text, version\)/);
+  assert.match(
+    source,
+    /No Forge builds are available for Minecraft \$\{version\}\./,
+  );
+  assert.doesNotMatch(source, /index_\$\{version\}\.html/);
+  assert.doesNotMatch(source, /matchAll\(\/\(\[0-9\]\+\\\.\[0-9\]\+\\\.\[0-9\]\+\)/);
+});
+
 test("create form shows and locks its asynchronous creation state", async () => {
   const source = await readFile(
     "src/renderer/views/CreateServerView.tsx",
