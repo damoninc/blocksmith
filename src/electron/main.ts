@@ -28,6 +28,11 @@ const processes = new Map<string, ChildProcessWithoutNullStreams>();
 const settingsPath = () => path.join(app.getPath("userData"), "settings.json");
 const folder = (id: string) => path.join(serverRoot, id);
 const cleanName = (name: string) => name.trim().replace(/[<>:"/\\|?*]/g, "-");
+const paperRequest = {
+  headers: {
+    "User-Agent": "Blocksmith/1.0.0 (https://github.com/damoninc/blocksmith)",
+  },
+};
 async function settings() {
   try {
     return JSON.parse(await fs.readFile(settingsPath(), "utf8")) as {
@@ -37,13 +42,13 @@ async function settings() {
     return {};
   }
 }
-async function fetchJson<T>(url: string) {
-  const response = await fetch(url);
+async function fetchJson<T>(url: string, init?: RequestInit) {
+  const response = await fetch(url, init);
   if (!response.ok) throw new Error(`Request failed (${response.status}).`);
   return response.json() as Promise<T>;
 }
-async function download(url: string, to: string) {
-  const response = await fetch(url);
+async function download(url: string, to: string, init?: RequestInit) {
+  const response = await fetch(url, init);
   if (!response.ok) throw new Error(`Download failed (${response.status}).`);
   await fs.writeFile(to, Buffer.from(await response.arrayBuffer()));
 }
@@ -118,23 +123,25 @@ async function createServer(input: CreateInput): Promise<Server> {
       await download(detail.downloads.server.url, path.join(dir, "server.jar"));
     }
     if (input.type === "paper") {
-      const builds = await fetchJson<{
-        builds: {
-          build: number;
+      const builds = await fetchJson<
+        {
+          id: number;
           channel: string;
-          downloads: { application: { name: string } };
-        }[];
-      }>(
-        `https://api.papermc.io/v2/projects/paper/versions/${input.version}/builds`,
+          downloads: { "server:default": { url: string } };
+        }[]
+      >(
+        `https://fill.papermc.io/v3/projects/paper/versions/${input.version}/builds`,
+        paperRequest,
       );
-      const build = builds.builds.filter((b) => b.channel === "default").at(-1);
+      const build = builds.find((candidate) => candidate.channel === "STABLE");
       if (!build)
         throw new Error("Paper does not publish a build for this version.");
       await download(
-        `https://api.papermc.io/v2/projects/paper/versions/${input.version}/builds/${build.build}/downloads/${build.downloads.application.name}`,
+        build.downloads["server:default"].url,
         path.join(dir, "server.jar"),
+        paperRequest,
       );
-      server.build = build.build;
+      server.build = build.id;
     }
     if (input.type === "fabric") {
       const loaders = await fetchJson<

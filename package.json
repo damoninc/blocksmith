@@ -10,6 +10,8 @@
     "build:main": "tsc -p tsconfig.main.json",
     "build": "npm run build:main && vite build",
     "test:renderer": "vite build && node --test tests/renderer-*.test.mjs",
+    "test:server-creation": "node --test tests/server-creation.test.mjs",
+    "test": "npm run test:renderer && npm run test:server-creation",
     "start": "npm run build && electron .",
     "package:win": "npm run build && electron-builder --win portable"
   },

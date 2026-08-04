@@ -16,7 +16,7 @@ type CreateServerViewProps = {
     type: ServerType;
     version: string;
     forgeVersion?: string;
-  }) => void;
+  }) => Promise<void>;
 };
 
 export function CreateServerView({
@@ -27,6 +27,7 @@ export function CreateServerView({
   const [type, setType] = useState<ServerType>("vanilla");
   const [version, setVersion] = useState(versions[0] ?? "");
   const [forgeBuilds, setForgeBuilds] = useState<string[]>([]);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (!version && versions.length) setVersion(versions[0]);
@@ -39,15 +40,20 @@ export function CreateServerView({
     });
   }, [type, version]);
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    onCreate({
-      name: String(data.get("name")),
-      type,
-      version,
-      forgeVersion: String(data.get("forgeVersion") || ""),
-    });
+    setCreating(true);
+    try {
+      await onCreate({
+        name: String(data.get("name")),
+        type,
+        version,
+        forgeVersion: String(data.get("forgeVersion") || ""),
+      });
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
@@ -107,7 +113,9 @@ export function CreateServerView({
           </label>
         )}
         <p className="hint">{descriptions[type]}</p>
-        <button className="primary">Download & create server</button>
+        <button className="primary" disabled={creating}>
+          {creating ? "Creating server…" : "Download & create server"}
+        </button>
       </form>
     </section>
   );
