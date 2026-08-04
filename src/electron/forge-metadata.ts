@@ -7,7 +7,7 @@ export function forgeBuildsForMinecraft(
   const seen = new Set<string>();
   const xml = metadataXml.replace(
     /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)/g,
-    "",
+    (section) => section.startsWith("<![CDATA[") ? "<ignored-cdata />" : "",
   );
 
   for (const section of xml.matchAll(/<versions\b[^>]*>([\s\S]*?)<\/versions\s*>/g)) {

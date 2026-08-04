@@ -54,3 +54,14 @@ test("ignores version-like markup that is not direct version text", () => {
     ["52&1"],
   );
 });
+
+test("rejects a version whose text is interrupted by CDATA", () => {
+  const metadataXml = `
+    <versions>
+      <![CDATA[<version>1.21.1-99.0.0</version>]]>
+      <version>1.21.1-52<![CDATA[.1]]>.16</version>
+    </versions>
+  `;
+
+  assert.deepEqual(forgeBuildsForMinecraft(metadataXml, "1.21.1"), []);
+});
