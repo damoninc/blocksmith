@@ -32,7 +32,12 @@ test("create form shows and locks its asynchronous creation state", async () => 
 
   assert.match(source, /const \[creating, setCreating\] = useState\(false\)/);
   assert.match(source, /await onCreate\(/);
-  assert.match(source, /disabled=\{creating\}/);
+  const primaryButtonStart = source.indexOf('className="primary"');
+  const primaryButton = source.slice(
+    primaryButtonStart,
+    source.indexOf("</button>", primaryButtonStart),
+  );
+  assert.match(primaryButton, /disabled=\{[\s\S]*creating/);
   assert.match(source, /creating \? "Creating server…"/);
 });
 

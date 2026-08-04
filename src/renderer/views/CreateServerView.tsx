@@ -27,6 +27,8 @@ export function CreateServerView({
   const [type, setType] = useState<ServerType>("vanilla");
   const [version, setVersion] = useState(versions[0] ?? "");
   const [forgeBuilds, setForgeBuilds] = useState<string[]>([]);
+  const [forgeError, setForgeError] = useState("");
+  const [loadingForge, setLoadingForge] = useState(false);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -34,10 +36,45 @@ export function CreateServerView({
   }, [version, versions]);
 
   useEffect(() => {
-    if (type !== "forge" || !version) return;
-    window.blocksmith.listForge(version).then(setForgeBuilds).catch(() => {
+    if (type !== "forge" || !version) {
       setForgeBuilds([]);
-    });
+      setForgeError("");
+      setLoadingForge(false);
+      return;
+    }
+
+    let active = true;
+    setForgeBuilds([]);
+    setForgeError("");
+    setLoadingForge(true);
+    window.blocksmith
+      .listForge(version)
+      .then((builds) => {
+        if (active) {
+          setForgeBuilds(builds);
+          if (builds.length === 0) {
+            setForgeError(
+              `No Forge builds are available for Minecraft ${version}.`,
+            );
+          }
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setForgeError(
+            error instanceof Error
+              ? error.message
+              : "Could not load Forge builds.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setLoadingForge(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [type, version]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -105,15 +142,30 @@ export function CreateServerView({
         {type === "forge" && (
           <label>
             Forge build
-            <select name="forgeVersion">
-              {forgeBuilds.map((build) => (
-                <option key={build}>{build}</option>
-              ))}
-            </select>
+            {loadingForge ? (
+              <span className="hint">Loading Forge builds…</span>
+            ) : forgeError ? (
+              <span className="form-error" role="alert">
+                {forgeError}
+              </span>
+            ) : (
+              <select name="forgeVersion">
+                {forgeBuilds.map((build) => (
+                  <option key={build}>{build}</option>
+                ))}
+              </select>
+            )}
           </label>
         )}
         <p className="hint">{descriptions[type]}</p>
-        <button className="primary" disabled={creating}>
+        <button
+          className="primary"
+          disabled={
+            creating ||
+            (type === "forge" &&
+              (loadingForge || forgeBuilds.length === 0))
+          }
+        >
           {creating ? "Creating server…" : "Download & create server"}
         </button>
       </form>

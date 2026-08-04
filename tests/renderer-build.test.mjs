@@ -113,3 +113,41 @@ test("rename re-sorts the sidebar and delete reloads selection", async () => {
   assert.match(source, /await reload\(\)/);
   assert.match(source, /onServerDeleted=\{handleServerDeleted\}/);
 });
+
+test("Forge creation handles unavailable builds and stale requests", async () => {
+  const source = await readFile(
+    "src/renderer/views/CreateServerView.tsx",
+    "utf8",
+  );
+
+  assert.match(source, /const \[forgeError, setForgeError\] = useState\(""\)/);
+  assert.match(source, /const \[loadingForge, setLoadingForge\] = useState\(false\)/);
+
+  const forgeEffectStart = source.indexOf('if (type !== "forge" || !version)');
+  const forgeEffect = source.slice(
+    forgeEffectStart,
+    source.indexOf("}, [type, version]);", forgeEffectStart),
+  );
+  assert.match(forgeEffect, /let active = true/);
+  assert.match(
+    forgeEffect,
+    /if \(type !== "forge" \|\| !version\) \{[\s\S]*setForgeBuilds\(\[\]\)[\s\S]*setForgeError\(""\)[\s\S]*setLoadingForge\(false\)/,
+  );
+  assert.ok(
+    forgeEffect.indexOf("setForgeBuilds([])") <
+      forgeEffect.indexOf(".listForge(version)"),
+    "stale Forge builds must be cleared before requesting new ones",
+  );
+  assert.match(forgeEffect, /if \(active\)[\s\S]*setForgeBuilds/);
+  assert.match(
+    forgeEffect,
+    /\.catch\(\(error: unknown\)[\s\S]*error instanceof Error[\s\S]*error\.message/,
+  );
+  assert.match(forgeEffect, /return \(\) => \{[\s\S]*active = false/);
+  assert.match(source, /No Forge builds are available for Minecraft \$\{version\}\./);
+  assert.match(source, /role="alert"[\s\S]*\{forgeError\}/);
+  assert.match(
+    source,
+    /disabled=\{\s*creating \|\|\s*\(type === "forge" &&\s*\(loadingForge \|\| forgeBuilds\.length === 0\)\)\s*\}/,
+  );
+});
