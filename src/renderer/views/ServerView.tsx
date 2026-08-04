@@ -99,15 +99,17 @@ export function ServerView({
         <ModsTab server={server} mods={mods} onChange={onModsChange} />
       )}
       {tab === "console" && <ConsoleTab logs={logs} />}
-      <ServerManagementDialogs
-        key={server.id}
-        server={server}
-        running={running}
-        mode={managementMode}
-        onClose={() => setManagementMode(null)}
-        onRenamed={onServerChange}
-        onDeleted={onServerDeleted}
-      />
+      {managementMode && (
+        <ServerManagementDialogs
+          key={`${server.id}-${managementMode}`}
+          server={server}
+          running={running}
+          mode={managementMode}
+          onClose={() => setManagementMode(null)}
+          onRenamed={onServerChange}
+          onDeleted={onServerDeleted}
+        />
+      )}
     </section>
   );
 }

@@ -87,6 +87,8 @@ test("server management uses guarded rename and delete dialogs", async () => {
 
   assert.match(view, />Rename</);
   assert.match(view, />Delete</);
+  assert.match(view, /\{managementMode && \(/);
+  assert.match(view, /key=\{`\$\{server\.id\}-\$\{managementMode\}`\}/);
   assert.match(dialogs, /useState\(server\.name\)/);
   assert.match(dialogs, /Type <strong>\{server\.name\}<\/strong>/);
   assert.match(dialogs, /confirmation !== server\.name/);
