@@ -28,7 +28,9 @@ export function App() {
   const replaceServer = useCallback((server: ServerDetails) => {
     if (selectedId.current === server.id) setSelected(server);
     setServers((current) =>
-      current.map((item) => (item.id === server.id ? server : item)),
+      current
+        .map((item) => (item.id === server.id ? server : item))
+        .sort((a, b) => a.name.localeCompare(b.name)),
     );
   }, []);
 
@@ -63,6 +65,24 @@ export function App() {
       setView("welcome");
     }
   }, []);
+
+  const handleServerDeleted = useCallback(async (id: string) => {
+    setRunningServers((current) => {
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
+    setServerLogs((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+    if (selectedId.current === id) {
+      selectedId.current = null;
+      setSelected(null);
+    }
+    await reload();
+  }, [reload]);
 
   useEffect(() => {
     void reload();
@@ -149,6 +169,7 @@ export function App() {
               mods={mods}
               onTabChange={setTab}
               onServerChange={replaceServer}
+              onServerDeleted={handleServerDeleted}
               onNotify={notify}
               onStart={async () => {
                 const serverId = selected.id;

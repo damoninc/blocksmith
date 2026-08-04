@@ -94,3 +94,20 @@ test("server management uses guarded rename and delete dialogs", async () => {
   assert.match(dialogs, /window\.blocksmith\.rename/);
   assert.match(dialogs, /window\.blocksmith\.delete/);
 });
+
+test("rename re-sorts the sidebar and delete reloads selection", async () => {
+  const source = await readFile("src/renderer/App.tsx", "utf8");
+  const replaceServer = source.slice(
+    source.indexOf("const replaceServer"),
+    source.indexOf("const chooseServer"),
+  );
+
+  assert.match(
+    replaceServer,
+    /\.map\([\s\S]*item\.id === server\.id[\s\S]*\.sort\([\s\S]*name\.localeCompare/,
+  );
+  assert.match(source, /handleServerDeleted/);
+  assert.match(source, /delete next\[id\]/);
+  assert.match(source, /await reload\(\)/);
+  assert.match(source, /onServerDeleted=\{handleServerDeleted\}/);
+});

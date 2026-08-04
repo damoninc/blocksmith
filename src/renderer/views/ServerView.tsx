@@ -17,7 +17,7 @@ type ServerViewProps = {
   mods: string[];
   onTabChange: (tab: ServerTab) => void;
   onServerChange: (server: ServerDetails) => void;
-  onServerDeleted?: (id: string) => void;
+  onServerDeleted: (id: string) => void;
   onNotify: (message: string) => void;
   onStart: () => void;
   onStop: () => void;
@@ -106,7 +106,7 @@ export function ServerView({
         mode={managementMode}
         onClose={() => setManagementMode(null)}
         onRenamed={onServerChange}
-        onDeleted={(id) => onServerDeleted?.(id)}
+        onDeleted={onServerDeleted}
       />
     </section>
   );
