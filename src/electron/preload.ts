@@ -1,4 +1,24 @@
-import { contextBridge, ipcRenderer } from 'electron';
-contextBridge.exposeInMainWorld('blocksmith', {
-  getRoot: () => ipcRenderer.invoke('root:get'), chooseRoot: () => ipcRenderer.invoke('root:choose'), listServers: () => ipcRenderer.invoke('servers:list'), listVersions: () => ipcRenderer.invoke('versions:list'), listForge: (version: string) => ipcRenderer.invoke('forge:list', version), create: (input: unknown) => ipcRenderer.invoke('server:create', input), properties: (id: string) => ipcRenderer.invoke('server:properties', id), saveProperties: (id: string, text: string) => ipcRenderer.invoke('server:saveProperties', id, text), setEula: (id: string, accepted: boolean) => ipcRenderer.invoke('server:eula', id, accepted), mods: (id: string) => ipcRenderer.invoke('server:mods', id), addMod: (id: string) => ipcRenderer.invoke('server:addMod', id), start: (id: string) => ipcRenderer.invoke('server:start', id), stop: (id: string) => ipcRenderer.invoke('server:stop', id), onLog: (callback: (id: string, text: string) => void) => ipcRenderer.on('server:log', (_, ...args) => callback(args[0], args[1])), onStopped: (callback: (id: string, code: number | null) => void) => ipcRenderer.on('server:stopped', (_, ...args) => callback(args[0], args[1]))
+import { contextBridge, ipcRenderer } from "electron";
+contextBridge.exposeInMainWorld("blocksmith", {
+  getRoot: () => ipcRenderer.invoke("root:get"),
+  chooseRoot: () => ipcRenderer.invoke("root:choose"),
+  listServers: () => ipcRenderer.invoke("servers:list"),
+  listVersions: () => ipcRenderer.invoke("versions:list"),
+  listForge: (version: string) => ipcRenderer.invoke("forge:list", version),
+  create: (input: unknown) => ipcRenderer.invoke("server:create", input),
+  properties: (id: string) => ipcRenderer.invoke("server:properties", id),
+  saveProperties: (id: string, text: string) =>
+    ipcRenderer.invoke("server:saveProperties", id, text),
+  setEula: (id: string, accepted: boolean) =>
+    ipcRenderer.invoke("server:eula", id, accepted),
+  mods: (id: string) => ipcRenderer.invoke("server:mods", id),
+  addMod: (id: string) => ipcRenderer.invoke("server:addMod", id),
+  start: (id: string) => ipcRenderer.invoke("server:start", id),
+  stop: (id: string) => ipcRenderer.invoke("server:stop", id),
+  onLog: (callback: (id: string, text: string) => void) =>
+    ipcRenderer.on("server:log", (_, ...args) => callback(args[0], args[1])),
+  onStopped: (callback: (id: string, code: number | null) => void) =>
+    ipcRenderer.on("server:stopped", (_, ...args) =>
+      callback(args[0], args[1]),
+    ),
 });
