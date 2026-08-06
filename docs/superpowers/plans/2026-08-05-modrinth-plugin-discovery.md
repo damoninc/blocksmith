@@ -256,6 +256,6 @@ git add .gitignore docs/superpowers/plans/2026-08-05-modrinth-plugin-discovery.m
 git commit -m "docs: record Modrinth discovery implementation"
 ```
 
-- [ ] **Step 5: Update and verify the pull request**
+- [x] **Step 5: Update and verify the pull request**
 
 Fetch `origin/main`; if it moved, rebase and rerun affected checks. Push `codex/paper-plugin-management`, update PR #4, and wait until Conventional Commits and Windows Build both pass with `mergeable=MERGEABLE` and `mergeStateStatus=CLEAN`.
