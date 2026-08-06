@@ -195,6 +195,14 @@ export function App() {
                 }
               }}
               onStop={() => window.blocksmith.stop(selected.id)}
+              onCommand={async (command) => {
+                const serverId = selected.id;
+                await window.blocksmith.command(serverId, command);
+                setServerLogs((current) => ({
+                  ...current,
+                  [serverId]: `${current[serverId] ?? ""}> ${command.trim()}\n`,
+                }));
+              }}
               onModsChange={setMods}
             />
           )}

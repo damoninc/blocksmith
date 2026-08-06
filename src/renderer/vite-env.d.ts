@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
-import type { CommonServerProperties, ServerDetails, ServerType } from "./types";
+import type {
+  CommonServerProperties,
+  ServerDetails,
+  ServerLaunchSettings,
+  ServerType,
+} from "./types";
 
 declare global {
   interface Window {
@@ -23,10 +28,15 @@ declare global {
         advanced: string,
       ): Promise<ServerDetails>;
       setEula(id: string, accepted: boolean): Promise<ServerDetails>;
+      saveLaunch(
+        id: string,
+        launch: ServerLaunchSettings,
+      ): Promise<ServerDetails>;
       mods(id: string): Promise<string[]>;
       addMod(id: string): Promise<string[]>;
       start(id: string): Promise<void>;
       stop(id: string): Promise<void>;
+      command(id: string, command: string): Promise<void>;
       onLog(callback: (id: string, text: string) => void): void;
       onStopped(callback: (id: string, code: number | null) => void): void;
     };

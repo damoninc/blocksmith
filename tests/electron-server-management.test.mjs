@@ -6,6 +6,7 @@ import { test } from "node:test";
 import {
   deleteServer,
   renameServer,
+  saveServerLaunchSettings,
   serverDirectory,
 } from "../dist/main/server-management.js";
 
@@ -48,6 +49,34 @@ test("rename rejects an empty display name", async () => {
   const { root } = await fixture();
   try {
     await assert.rejects(renameServer(root, "my-server", "   "), /name/i);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("startup arguments are validated and persisted per server", async () => {
+  const { root, directory } = await fixture();
+  try {
+    const details = await saveServerLaunchSettings(root, "my-server", {
+      javaArgs: "-Xms2G -Xmx8G",
+      serverArgs: "nogui --demo",
+    });
+    const metadata = JSON.parse(
+      await readFile(join(directory, ".blocksmith.json"), "utf8"),
+    );
+
+    assert.deepEqual(details.launch, {
+      javaArgs: "-Xms2G -Xmx8G",
+      serverArgs: "nogui --demo",
+    });
+    assert.deepEqual(metadata.launch, details.launch);
+    await assert.rejects(
+      saveServerLaunchSettings(root, "my-server", {
+        javaArgs: '"unfinished',
+        serverArgs: "nogui",
+      }),
+      /unclosed quote/i,
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }

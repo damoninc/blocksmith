@@ -11,6 +11,11 @@ export type Server = {
   forgeVersion?: string;
 };
 
+export type ServerLaunchSettings = {
+  javaArgs: string;
+  serverArgs: string;
+};
+
 export type CommonServerProperties = {
   motd: string;
   "server-ip": string;
@@ -28,6 +33,7 @@ export type CommonServerProperties = {
 };
 
 export type ServerDetails = Server & {
+  launch: ServerLaunchSettings;
   properties: CommonServerProperties;
   advancedProperties: string;
   eulaAccepted: boolean;
@@ -35,4 +41,9 @@ export type ServerDetails = Server & {
 };
 
 export type View = "welcome" | "create" | "server";
-export type ServerTab = "overview" | "properties" | "mods" | "console";
+export type ServerTab =
+  | "overview"
+  | "startup"
+  | "properties"
+  | "mods"
+  | "console";

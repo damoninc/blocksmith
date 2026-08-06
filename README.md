@@ -1,6 +1,6 @@
 # Blocksmith
 
-Blocksmith is a local-first Electron app for creating and operating Minecraft Java Edition servers. Choose a server folder, create Vanilla, Paper, Fabric, or Forge instances, edit `server.properties`, and add mods without leaving the desktop app.
+Blocksmith is a local-first Electron app for creating and operating Minecraft Java Edition servers. Choose a server folder, create Vanilla, Paper, Fabric, or Forge instances, edit `server.properties`, customize per-server JVM and server launch arguments, run console commands, and add mods without leaving the desktop app.
 
 ## Requirements
 

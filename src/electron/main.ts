@@ -18,8 +18,21 @@ import {
   javaCandidates,
   validateJava,
 } from "./java-resolver";
-import { deleteServer, renameServer } from "./server-management";
+import {
+  deleteServer,
+  managedServerDirectory,
+  renameServer,
+  saveServerLaunchSettings,
+} from "./server-management";
 import { fetchForgeBuildsForMinecraft } from "./forge-builds";
+import {
+  buildServerLaunchCommand,
+  defaultServerLaunchSettings,
+  forgeJvmArgumentFile,
+  normalizeServerLaunchSettings,
+  validateConsoleCommand,
+  type ServerLaunchSettings,
+} from "./server-launch";
 
 type CreateInput = {
   name: string;
@@ -65,9 +78,9 @@ async function download(url: string, to: string, init?: RequestInit) {
   if (!response.ok) throw new Error(`Download failed (${response.status}).`);
   await fs.writeFile(to, Buffer.from(await response.arrayBuffer()));
 }
-async function metadata(id: string) {
+async function metadata(directory: string) {
   return JSON.parse(
-    await fs.readFile(path.join(folder(id), ".blocksmith.json"), "utf8"),
+    await fs.readFile(path.join(directory, ".blocksmith.json"), "utf8"),
   ) as ServerMetadata;
 }
 async function resolveJavaExecutable(): Promise<string> {
@@ -151,6 +164,7 @@ async function createServer(input: CreateInput): Promise<ServerDetails> {
     version: input.version,
     createdAt: new Date().toISOString(),
     jar: "server.jar",
+    launch: defaultServerLaunchSettings(),
   };
   try {
     if (input.type === "vanilla") {
@@ -317,6 +331,11 @@ ipcMain.handle("server:eula", async (_, id: string, accepted: boolean) => {
   await fs.writeFile(path.join(folder(id), "eula.txt"), `eula=${accepted}\n`);
   return readServerDetails(folder(id));
 });
+ipcMain.handle(
+  "server:saveLaunch",
+  (_, id: string, launch: ServerLaunchSettings) =>
+    saveServerLaunchSettings(serverRoot, id, launch),
+);
 ipcMain.handle("server:mods", async (_, id: string) => {
   try {
     return (await fs.readdir(path.join(folder(id), "mods"))).filter((f) =>
@@ -349,39 +368,43 @@ ipcMain.handle("server:start", async (_, id: string) => {
   if (processes.has(id) || startingServers.has(id)) return;
   startingServers.add(id);
   try {
-  const server = await metadata(id);
-  const java = server.type === "forge" ? "" : await resolveJavaExecutable();
-  const command = server.type === "forge" ? "cmd.exe" : java;
-  const args =
-    server.type === "forge"
-      ? ["/d", "/s", "/c", "run.bat"]
-      : ["-Xms1G", "-Xmx2G", "-jar", server.jar!, "nogui"];
-  const child = spawn(command, args, { cwd: folder(id), windowsHide: true });
-  processes.set(id, child);
-  child.stdout.on("data", (data) =>
-    window.webContents.send("server:log", id, data.toString()),
-  );
-  child.stderr.on("data", (data) =>
-    window.webContents.send("server:log", id, data.toString()),
-  );
-  let stopped = false;
-  const reportStopped = (code: number | null) => {
-    if (stopped) return;
-    stopped = true;
-    processes.delete(id);
-    window.webContents.send("server:stopped", id, code);
-  };
-  child.once("close", reportStopped);
-  const started = new Promise<void>((resolve, reject) => {
-    child.once("spawn", resolve);
-    child.once("error", (error) => {
-      const message = `Could not start ${command}: ${error.message}`;
-      window.webContents.send("server:log", id, `${message}\n`);
-      reportStopped(null);
-      reject(new Error(message));
+    const directory = await managedServerDirectory(serverRoot, id);
+    const server = await metadata(directory);
+    const java = server.type === "forge" ? "" : await resolveJavaExecutable();
+    const launch = normalizeServerLaunchSettings(server.launch);
+    if (server.type === "forge") {
+      await fs.writeFile(
+        path.join(directory, "user_jvm_args.txt"),
+        forgeJvmArgumentFile(launch),
+      );
+    }
+    const { command, args } = buildServerLaunchCommand(server, java, launch);
+    const child = spawn(command, args, { cwd: directory, windowsHide: true });
+    processes.set(id, child);
+    child.stdout.on("data", (data) =>
+      window.webContents.send("server:log", id, data.toString()),
+    );
+    child.stderr.on("data", (data) =>
+      window.webContents.send("server:log", id, data.toString()),
+    );
+    let stopped = false;
+    const reportStopped = (code: number | null) => {
+      if (stopped) return;
+      stopped = true;
+      processes.delete(id);
+      window.webContents.send("server:stopped", id, code);
+    };
+    child.once("close", reportStopped);
+    const started = new Promise<void>((resolve, reject) => {
+      child.once("spawn", resolve);
+      child.once("error", (error) => {
+        const message = `Could not start ${command}: ${error.message}`;
+        window.webContents.send("server:log", id, `${message}\n`);
+        reportStopped(null);
+        reject(new Error(message));
+      });
     });
-  });
-  await started;
+    await started;
   } finally {
     startingServers.delete(id);
   }
@@ -389,3 +412,15 @@ ipcMain.handle("server:start", async (_, id: string) => {
 ipcMain.handle("server:stop", (_, id: string) =>
   processes.get(id)?.stdin.write("stop\n"),
 );
+ipcMain.handle("server:command", (_, id: string, input: string) => {
+  const child = processes.get(id);
+  if (!child || child.stdin.destroyed || !child.stdin.writable) {
+    throw new Error("The server is not running.");
+  }
+  const command = validateConsoleCommand(input);
+  return new Promise<void>((resolve, reject) => {
+    child.stdin.write(`${command}\n`, (error) =>
+      error ? reject(error) : resolve(),
+    );
+  });
+});
