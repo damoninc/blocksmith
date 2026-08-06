@@ -45,6 +45,7 @@ import {
   modrinthRequest,
   resolveModrinthPluginDownload,
   searchModrinthPlugins,
+  type ModrinthSort,
 } from "./modrinth-plugins";
 
 type CreateInput = {
@@ -386,9 +387,9 @@ ipcMain.handle(
 );
 ipcMain.handle(
   "plugins:searchModrinth",
-  async (_, id: string, query: string) => {
+  async (_, id: string, query: string, sort: ModrinthSort) => {
     const { metadata: server } = await paperServerMetadata(serverRoot, id);
-    return searchModrinthPlugins(server.version, query);
+    return searchModrinthPlugins(server.version, query, sort);
   },
 );
 ipcMain.handle(

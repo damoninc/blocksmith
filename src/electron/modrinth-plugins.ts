@@ -18,6 +18,8 @@ export type ModrinthPlugin = {
   downloads: number;
 };
 
+export type ModrinthSort = "downloads" | "relevance" | "updated";
+
 type SearchResponse = {
   hits: Array<{
     project_id: string;
@@ -47,12 +49,21 @@ async function responseJson<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+function validateModrinthSort(sort: string): ModrinthSort {
+  if (sort !== "downloads" && sort !== "relevance" && sort !== "updated") {
+    throw new Error("Invalid Modrinth sort.");
+  }
+  return sort;
+}
+
 export async function searchModrinthPlugins(
   gameVersion: string,
-  query = "",
+  query: string,
+  sort: ModrinthSort,
   request: typeof fetch = fetch,
 ): Promise<ModrinthPlugin[]> {
   if (!gameVersion.trim()) throw new Error("A Minecraft version is required.");
+  const index = validateModrinthSort(sort);
   const facets = [
     ["all_project_types:plugin"],
     ["categories:paper"],
@@ -62,7 +73,7 @@ export async function searchModrinthPlugins(
   const params = new URLSearchParams({
     query: query.trim(),
     facets: JSON.stringify(facets),
-    index: query.trim() ? "relevance" : "downloads",
+    index,
     limit: "20",
   });
   const response = await request(`${API_ROOT}/search?${params}`, modrinthRequest);

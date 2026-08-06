@@ -21,8 +21,8 @@ contextBridge.exposeInMainWorld("blocksmith", {
   plugins: (id: string) => ipcRenderer.invoke("server:plugins", id),
   addPlugins: (id: string, files: unknown[]) =>
     ipcRenderer.invoke("server:addPlugins", id, files),
-  searchModrinthPlugins: (id: string, query: string) =>
-    ipcRenderer.invoke("plugins:searchModrinth", id, query),
+  searchModrinthPlugins: (id: string, query: string, sort: string) =>
+    ipcRenderer.invoke("plugins:searchModrinth", id, query, sort),
   installModrinthPlugin: (id: string, projectId: string) =>
     ipcRenderer.invoke("plugins:installModrinth", id, projectId),
   start: (id: string) => ipcRenderer.invoke("server:start", id),

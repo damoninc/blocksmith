@@ -40,6 +40,7 @@ export function PluginsTab({
         const found = await window.blocksmith.searchModrinthPlugins(
           server.id,
           requestedQuery,
+          "downloads",
         );
         if (requestId === searchRequest.current) setResults(found);
       } catch (searchError) {

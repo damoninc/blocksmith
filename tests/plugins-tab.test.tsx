@@ -107,7 +107,11 @@ describe("Paper plugin management", () => {
     );
 
     expect(await screen.findByText("WorldEdit")).not.toBeNull();
-    expect(searchModrinthPlugins).toHaveBeenCalledWith("paper-server", "");
+    expect(searchModrinthPlugins).toHaveBeenCalledWith(
+      "paper-server",
+      "",
+      "downloads",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Install" }));
     await waitFor(() =>

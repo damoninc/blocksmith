@@ -133,11 +133,17 @@ test("Modrinth search is constrained to compatible Paper plugins", async () => {
     );
   };
 
-  const plugins = await searchModrinthPlugins("1.21.8", "claims", request);
+  const plugins = await searchModrinthPlugins(
+    "1.21.8",
+    "claims",
+    "relevance",
+    request,
+  );
 
   const url = new URL(requestedUrl);
   assert.equal(url.pathname, "/v2/search");
   assert.equal(url.searchParams.get("query"), "claims");
+  assert.equal(url.searchParams.get("index"), "relevance");
   const facets = JSON.parse(url.searchParams.get("facets"));
   assert.deepEqual(facets, [
     ["all_project_types:plugin"],
@@ -156,6 +162,34 @@ test("Modrinth search is constrained to compatible Paper plugins", async () => {
       downloads: 42,
     },
   ]);
+});
+
+test("Modrinth search supports each catalog sort", async () => {
+  for (const sort of ["downloads", "relevance", "updated"]) {
+    let requestedUrl = "";
+    await searchModrinthPlugins(
+      "1.21.8",
+      "claims",
+      sort,
+      async (url) => {
+        requestedUrl = String(url);
+        return new Response(JSON.stringify({ hits: [] }));
+      },
+    );
+    assert.equal(new URL(requestedUrl).searchParams.get("index"), sort);
+  }
+});
+
+test("Modrinth search rejects unsupported catalog sorts", async () => {
+  let requested = false;
+  await assert.rejects(
+    searchModrinthPlugins("1.21.8", "", "newest", async () => {
+      requested = true;
+      return new Response(JSON.stringify({ hits: [] }));
+    }),
+    /invalid Modrinth sort/i,
+  );
+  assert.equal(requested, false);
 });
 
 test("Modrinth install selects the primary JAR from a compatible release", async () => {

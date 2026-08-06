@@ -50,6 +50,8 @@ export type ModrinthPlugin = {
   downloads: number;
 };
 
+export type ModrinthSort = "downloads" | "relevance" | "updated";
+
 export type View = "welcome" | "create" | "server";
 export type ServerTab =
   | "overview"

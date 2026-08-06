@@ -2,6 +2,7 @@
 import type {
   CommonServerProperties,
   ModrinthPlugin,
+  ModrinthSort,
   ServerDetails,
   ServerLaunchSettings,
   ServerType,
@@ -43,6 +44,7 @@ declare global {
       searchModrinthPlugins(
         id: string,
         query: string,
+        sort: ModrinthSort,
       ): Promise<ModrinthPlugin[]>;
       installModrinthPlugin(
         id: string,
