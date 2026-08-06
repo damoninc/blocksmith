@@ -10,8 +10,13 @@ module.exports = {
       "@semantic-release/release-notes-generator",
       { preset: "conventionalcommits" },
     ],
-    ["@semantic-release/npm", { npmPublish: false }],
-    ["@semantic-release/exec", { prepareCmd: "npm run package:win" }],
+    [
+      "@semantic-release/exec",
+      {
+        prepareCmd:
+          "npm version ${nextRelease.version} --no-git-tag-version --allow-same-version && npm run package:win",
+      },
+    ],
     [
       "@semantic-release/github",
       {

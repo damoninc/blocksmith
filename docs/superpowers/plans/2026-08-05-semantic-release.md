@@ -33,7 +33,7 @@ assert.match(ciWorkflow, /commitlint/);
 assert.match(ciWorkflow, /npm run package:win/);
 ```
 
-Also assert that the npm plugin disables registry publication, the exec plugin builds the Windows package during `prepare`, and the GitHub plugin uploads `dist/*.exe`.
+Also assert that the exec plugin versions and builds the Windows package during `prepare`, the npm publication plugin is not active, and the GitHub plugin uploads `dist/*.exe`.
 
 - [ ] **Step 3: Run the focused test and confirm the red state**
 
@@ -80,7 +80,7 @@ module.exports = {
 
 - [ ] **Step 4: Configure semantic-release**
 
-Create `release.config.cjs` with the `main` release branch, `v${version}` tags, the Conventional Commits analyzer and notes generator, npm version preparation with `npmPublish: false`, `npm run package:win` in the exec prepare step, and a GitHub release asset at `dist/*.exe`.
+Create `release.config.cjs` with the `main` release branch, `v${version}` tags, the Conventional Commits analyzer and notes generator, runner npm version preparation followed by `npm run package:win` in the exec prepare step, and a GitHub release asset at `dist/*.exe`. Do not activate the semantic-release npm publication plugin.
 
 - [ ] **Step 5: Keep the focused test red for workflow-only reasons**
 

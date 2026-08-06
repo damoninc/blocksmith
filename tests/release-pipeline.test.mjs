@@ -24,8 +24,11 @@ test("semantic-release versions and publishes the Windows executable", () => {
   assert.equal(releaseConfig.tagFormat, "v${version}");
   assert.equal(plugin("@semantic-release/commit-analyzer")[1].preset, "conventionalcommits");
   assert.equal(plugin("@semantic-release/release-notes-generator")[1].preset, "conventionalcommits");
-  assert.equal(plugin("@semantic-release/npm")[1].npmPublish, false);
-  assert.equal(plugin("@semantic-release/exec")[1].prepareCmd, "npm run package:win");
+  assert.equal(plugin("@semantic-release/npm"), undefined);
+  assert.equal(
+    plugin("@semantic-release/exec")[1].prepareCmd,
+    "npm version ${nextRelease.version} --no-git-tag-version --allow-same-version && npm run package:win",
+  );
   assert.deepEqual(plugin("@semantic-release/github")[1].assets, [
     {
       path: "dist/*.exe",
