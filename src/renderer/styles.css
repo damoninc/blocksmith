@@ -125,7 +125,9 @@ textarea { width: 100%; min-height: 350px; resize: vertical; font: 13px Consolas
 .plugin-list { margin-top: 17px; }
 .plugin-list li:last-child { border-bottom: 0; }
 .modrinth-browser .eyebrow { margin: 0 0 7px; }
-.plugin-search { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 18px; }
+.plugin-search { display: grid; grid-template-columns: minmax(220px, 1fr) auto auto; align-items: end; gap: 10px; margin-bottom: 18px; }
+.plugin-sort { display: grid; grid-template-columns: auto auto; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+.plugin-sort select { min-width: 155px; }
 .plugin-results { display: grid; gap: 10px; }
 .plugin-result { display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 14px; min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #172019; }
 .plugin-result img, .plugin-icon-fallback { width: 46px; height: 46px; border-radius: 8px; object-fit: cover; }
@@ -134,6 +136,8 @@ textarea { width: 100%; min-height: 350px; resize: vertical; font: 13px Consolas
 .plugin-result h3 { margin: 0 0 4px; font-size: 15px; }
 .plugin-result p { margin: 0 0 5px; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plugin-result small, .modrinth-credit { color: var(--muted); }
+.plugin-details-link { display: block; width: fit-content; margin-top: 5px; padding: 0; border-radius: 0; background: transparent; color: var(--green); font-size: 12px; font-weight: 700; }
+.plugin-details-link:hover, .plugin-details-link:focus { text-decoration: underline; outline: none; }
 .install-plugin { min-width: 88px; }
 .plugin-browser-state { padding: 28px; text-align: center; color: var(--muted); }
 .modrinth-credit { margin: 18px 0 0; font-size: 12px; line-height: 1.5; }

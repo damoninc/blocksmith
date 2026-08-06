@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ModrinthPlugin, Server } from "../../types";
+import type { ModrinthPlugin, ModrinthSort, Server } from "../../types";
 
 type PluginsTabProps = {
   server: Server;
@@ -22,9 +22,11 @@ export function PluginsTab({
 }: PluginsTabProps) {
   const input = useRef<HTMLInputElement>(null);
   const searchRequest = useRef(0);
+  const debounceTimer = useRef<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<ModrinthSort>("downloads");
   const [results, setResults] = useState<ModrinthPlugin[]>([]);
   const [searching, setSearching] = useState(true);
   const [installing, setInstalling] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export function PluginsTab({
   const [catalogError, setCatalogError] = useState("");
 
   const search = useCallback(
-    async (requestedQuery: string) => {
+    async (requestedQuery: string, requestedSort: ModrinthSort) => {
       const requestId = ++searchRequest.current;
       setSearching(true);
       setCatalogError("");
@@ -40,7 +42,7 @@ export function PluginsTab({
         const found = await window.blocksmith.searchModrinthPlugins(
           server.id,
           requestedQuery,
-          "downloads",
+          requestedSort,
         );
         if (requestId === searchRequest.current) setResults(found);
       } catch (searchError) {
@@ -59,11 +61,18 @@ export function PluginsTab({
   );
 
   useEffect(() => {
-    void search("");
+    debounceTimer.current = window.setTimeout(() => {
+      debounceTimer.current = null;
+      void search(query, sort);
+    }, 350);
     return () => {
       searchRequest.current += 1;
+      if (debounceTimer.current !== null) {
+        window.clearTimeout(debounceTimer.current);
+        debounceTimer.current = null;
+      }
     };
-  }, [search]);
+  }, [query, search, sort]);
 
   const addFiles = async (files: FileList | File[]) => {
     const selected = Array.from(files);
@@ -128,6 +137,19 @@ export function PluginsTab({
       );
     } finally {
       setInstalling(null);
+    }
+  };
+
+  const openDetails = async (plugin: ModrinthPlugin) => {
+    setCatalogError("");
+    try {
+      await window.blocksmith.openModrinthPlugin(plugin.slug);
+    } catch (openError) {
+      setCatalogError(
+        openError instanceof Error
+          ? openError.message
+          : `Could not open ${plugin.title} on Modrinth.`,
+      );
     }
   };
 
@@ -216,7 +238,11 @@ export function PluginsTab({
           className="plugin-search"
           onSubmit={(event) => {
             event.preventDefault();
-            void search(query);
+            if (debounceTimer.current !== null) {
+              window.clearTimeout(debounceTimer.current);
+              debounceTimer.current = null;
+            }
+            void search(query, sort);
           }}
         >
           <label className="visually-hidden" htmlFor="plugin-search">
@@ -229,9 +255,21 @@ export function PluginsTab({
             placeholder="Search permissions, maps, claims..."
             onChange={(event) => setQuery(event.target.value)}
           />
-          <button type="submit" disabled={searching}>
-            Search
-          </button>
+          <label className="plugin-sort">
+            <span>Sort</span>
+            <select
+              aria-label="Sort plugins"
+              value={sort}
+              onChange={(event) =>
+                setSort(event.target.value as ModrinthSort)
+              }
+            >
+              <option value="downloads">Popular</option>
+              <option value="relevance">Relevance</option>
+              <option value="updated">Recently updated</option>
+            </select>
+          </label>
+          <button type="submit">Search</button>
         </form>
         {catalogError && (
           <p className="form-error" role="alert">
@@ -260,6 +298,14 @@ export function PluginsTab({
                     by {plugin.author} · {downloadCount(plugin.downloads)}{" "}
                     downloads
                   </small>
+                  <button
+                    type="button"
+                    className="plugin-details-link"
+                    aria-label={`View ${plugin.title} on Modrinth`}
+                    onClick={() => void openDetails(plugin)}
+                  >
+                    View on Modrinth ↗
+                  </button>
                 </div>
                 <button
                   type="button"
