@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { generateNotes } from "@semantic-release/release-notes-generator";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -39,6 +40,31 @@ test("semantic-release versions and publishes the Windows executable", () => {
   const packageJson = JSON.parse(readRepoFile("package.json"));
   assert.equal(packageJson.private, true);
   assert.equal(packageJson.scripts.release, "semantic-release");
+});
+
+test("release notes include releasable Conventional Commits", async () => {
+  const notes = await generateNotes(
+    { preset: "conventionalcommits" },
+    {
+      commits: [
+        {
+          hash: "a".repeat(40),
+          message: "feat(ci): automate semantic Windows releases",
+        },
+      ],
+      lastRelease: {},
+      nextRelease: {
+        version: "1.0.0",
+        gitTag: "v1.0.0",
+        gitHead: "a".repeat(40),
+      },
+      options: { repositoryUrl: "https://github.com/damoninc/blocksmith.git" },
+      cwd: repoRoot,
+    },
+  );
+
+  assert.match(notes, /Features/);
+  assert.match(notes, /automate semantic Windows releases/);
 });
 
 test("pull-request CI enforces Conventional Commits and packages Windows", () => {
