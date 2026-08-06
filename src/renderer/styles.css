@@ -117,6 +117,26 @@ textarea { width: 100%; min-height: 350px; resize: vertical; font: 13px Consolas
 .command-preview code { color: #c9d9c9; font: 12px Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
 .modlist { list-style: none; padding: 0; margin: 0; }
 .modlist li { padding: 12px; border-bottom: 1px solid var(--line); font-family: Consolas, monospace; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.plugin-manager { display: grid; gap: 20px; }
+.plugin-dropzone { display: grid; place-items: center; gap: 6px; min-height: 125px; padding: 22px; border: 2px dashed var(--line); border-radius: 9px; background: #131b15; color: var(--muted); cursor: pointer; transition: .15s ease; }
+.plugin-dropzone strong { color: var(--text); font-size: 16px; }
+.plugin-dropzone:hover, .plugin-dropzone:focus, .plugin-dropzone.dragging { outline: none; border-color: var(--green); background: #1b2a1c; }
+.plugin-list { margin-top: 17px; }
+.plugin-list li:last-child { border-bottom: 0; }
+.modrinth-browser .eyebrow { margin: 0 0 7px; }
+.plugin-search { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 18px; }
+.plugin-results { display: grid; gap: 10px; }
+.plugin-result { display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 14px; min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #172019; }
+.plugin-result img, .plugin-icon-fallback { width: 46px; height: 46px; border-radius: 8px; object-fit: cover; }
+.plugin-icon-fallback { display: grid; place-items: center; background: #2c422e; color: var(--green); font-size: 20px; font-weight: 900; }
+.plugin-result-copy { min-width: 0; }
+.plugin-result h3 { margin: 0 0 4px; font-size: 15px; }
+.plugin-result p { margin: 0 0 5px; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plugin-result small, .modrinth-credit { color: var(--muted); }
+.install-plugin { min-width: 88px; }
+.plugin-browser-state { padding: 28px; text-align: center; color: var(--muted); }
+.modrinth-credit { margin: 18px 0 0; font-size: 12px; line-height: 1.5; }
 .console pre { margin: 0; min-height: 350px; max-height: 430px; overflow: auto; background: #0d120e; padding: 16px; border-radius: 6px; color: #c9d9c9; font: 12px Consolas, monospace; white-space: pre-wrap; }
 .console-command { display: grid; gap: 8px; margin-top: 14px; }
 .console-command > div { display: flex; gap: 10px; }

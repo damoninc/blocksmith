@@ -26,7 +26,9 @@ export function serverDirectory(root: string, id: string): string {
   return target;
 }
 
-async function readMetadata(directory: string): Promise<ServerMetadata> {
+export async function readServerMetadata(
+  directory: string,
+): Promise<ServerMetadata> {
   const metadataPath = path.join(directory, ".blocksmith.json");
   const metadataStats = await fs.lstat(metadataPath);
   if (metadataStats.isSymbolicLink()) {
@@ -41,7 +43,10 @@ async function readMetadata(directory: string): Promise<ServerMetadata> {
   ) as ServerMetadata;
 }
 
-export async function managedServerDirectory(root: string, id: string): Promise<string> {
+export async function managedServerDirectory(
+  root: string,
+  id: string,
+): Promise<string> {
   const lexicalDirectory = serverDirectory(root, id);
   const directoryStats = await fs.lstat(lexicalDirectory);
   if (directoryStats.isSymbolicLink()) {
@@ -73,7 +78,7 @@ export async function saveServerLaunchSettings(
   parseLaunchArguments(normalized.javaArgs);
   parseLaunchArguments(normalized.serverArgs);
   const directory = await managedServerDirectory(root, id);
-  const metadata = await readMetadata(directory);
+  const metadata = await readServerMetadata(directory);
   if (metadata.id !== id) throw new Error("Server metadata does not match its folder.");
   await fs.writeFile(
     path.join(directory, ".blocksmith.json"),
@@ -86,7 +91,7 @@ export async function renameServer(root: string, id: string, name: string) {
   const trimmedName = name.trim();
   if (!trimmedName) throw new Error("Server name cannot be empty.");
   const directory = await managedServerDirectory(root, id);
-  const metadata = await readMetadata(directory);
+  const metadata = await readServerMetadata(directory);
   if (metadata.id !== id) throw new Error("Server metadata does not match its folder.");
   await fs.writeFile(
     path.join(directory, ".blocksmith.json"),
@@ -103,7 +108,7 @@ export async function deleteServer(
 ): Promise<void> {
   const directory = await managedServerDirectory(root, id);
   if (running) throw new Error("Stop the running server before deleting it.");
-  const metadata = await readMetadata(directory);
+  const metadata = await readServerMetadata(directory);
   if (metadata.id !== id) throw new Error("Server metadata does not match its folder.");
   if (confirmation !== metadata.name) {
     throw new Error("Type the exact server name to confirm deletion.");

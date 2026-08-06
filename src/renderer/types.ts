@@ -40,10 +40,21 @@ export type ServerDetails = Server & {
   address: string;
 };
 
+export type ModrinthPlugin = {
+  projectId: string;
+  slug: string;
+  title: string;
+  description: string;
+  author: string;
+  iconUrl: string | null;
+  downloads: number;
+};
+
 export type View = "welcome" | "create" | "server";
 export type ServerTab =
   | "overview"
   | "startup"
   | "properties"
   | "mods"
+  | "plugins"
   | "console";

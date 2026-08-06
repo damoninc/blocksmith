@@ -14,6 +14,7 @@ export function App() {
   const [view, setView] = useState<View>("welcome");
   const [versions, setVersions] = useState<string[]>([]);
   const [mods, setMods] = useState<string[]>([]);
+  const [plugins, setPlugins] = useState<string[]>([]);
   const [tab, setTab] = useState<ServerTab>("overview");
   const [runningServers, setRunningServers] = useState<Set<string>>(() => new Set());
   const [serverLogs, setServerLogs] = useState<Record<string, string>>({});
@@ -37,9 +38,17 @@ export function App() {
   const chooseServer = useCallback(async (server: ServerDetails) => {
     selectedId.current = server.id;
     setSelected(server);
-    const foundMods = await window.blocksmith.mods(server.id);
+    const [foundMods, foundPlugins] = await Promise.all([
+      server.type === "fabric" || server.type === "forge"
+        ? window.blocksmith.mods(server.id)
+        : Promise.resolve([]),
+      server.type === "paper"
+        ? window.blocksmith.plugins(server.id)
+        : Promise.resolve([]),
+    ]);
     if (selectedId.current !== server.id) return;
     setMods(foundMods);
+    setPlugins(foundPlugins);
     setView("server");
     setTab("overview");
   }, []);
@@ -55,13 +64,24 @@ export function App() {
     if (next) {
       selectedId.current = next.id;
       setSelected(next);
-      const foundMods = await window.blocksmith.mods(next.id);
-      if (selectedId.current === next.id) setMods(foundMods);
+      const [foundMods, foundPlugins] = await Promise.all([
+        next.type === "fabric" || next.type === "forge"
+          ? window.blocksmith.mods(next.id)
+          : Promise.resolve([]),
+        next.type === "paper"
+          ? window.blocksmith.plugins(next.id)
+          : Promise.resolve([]),
+      ]);
+      if (selectedId.current === next.id) {
+        setMods(foundMods);
+        setPlugins(foundPlugins);
+      }
       setView("server");
     } else {
       selectedId.current = null;
       setSelected(null);
       setMods([]);
+      setPlugins([]);
       setView("welcome");
     }
   }, []);
@@ -167,6 +187,7 @@ export function App() {
               running={runningServers.has(selected.id)}
               logs={serverLogs[selected.id] ?? "Server is not running."}
               mods={mods}
+              plugins={plugins}
               onTabChange={setTab}
               onServerChange={replaceServer}
               onServerDeleted={handleServerDeleted}
@@ -204,6 +225,7 @@ export function App() {
                 }));
               }}
               onModsChange={setMods}
+              onPluginsChange={setPlugins}
             />
           )}
         </ContentShell>

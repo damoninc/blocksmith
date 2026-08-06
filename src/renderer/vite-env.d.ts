@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 import type {
   CommonServerProperties,
+  ModrinthPlugin,
   ServerDetails,
   ServerLaunchSettings,
   ServerType,
@@ -34,6 +35,19 @@ declare global {
       ): Promise<ServerDetails>;
       mods(id: string): Promise<string[]>;
       addMod(id: string): Promise<string[]>;
+      plugins(id: string): Promise<string[]>;
+      addPlugins(
+        id: string,
+        files: Array<{ name: string; data: Uint8Array }>,
+      ): Promise<string[]>;
+      searchModrinthPlugins(
+        id: string,
+        query: string,
+      ): Promise<ModrinthPlugin[]>;
+      installModrinthPlugin(
+        id: string,
+        projectId: string,
+      ): Promise<string[]>;
       start(id: string): Promise<void>;
       stop(id: string): Promise<void>;
       command(id: string, command: string): Promise<void>;

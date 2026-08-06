@@ -33,6 +33,19 @@ import {
   validateConsoleCommand,
   type ServerLaunchSettings,
 } from "./server-launch";
+import {
+  addDownloadedPlugin,
+  addPluginFiles,
+  listPlugins,
+  paperServerMetadata,
+  pluginFilename,
+  type PluginUpload,
+} from "./server-plugins";
+import {
+  modrinthRequest,
+  resolveModrinthPluginDownload,
+  searchModrinthPlugins,
+} from "./modrinth-plugins";
 
 type CreateInput = {
   name: string;
@@ -363,6 +376,42 @@ ipcMain.handle("server:addMod", async (_, id: string) => {
     ? []
     : result.filePaths.map((file) => path.basename(file));
 });
+ipcMain.handle("server:plugins", (_, id: string) =>
+  listPlugins(serverRoot, id),
+);
+ipcMain.handle(
+  "server:addPlugins",
+  (_, id: string, files: PluginUpload[]) =>
+    addPluginFiles(serverRoot, id, files),
+);
+ipcMain.handle(
+  "plugins:searchModrinth",
+  async (_, id: string, query: string) => {
+    const { metadata: server } = await paperServerMetadata(serverRoot, id);
+    return searchModrinthPlugins(server.version, query);
+  },
+);
+ipcMain.handle(
+  "plugins:installModrinth",
+  async (_, id: string, projectId: string) => {
+    const { metadata: server } = await paperServerMetadata(serverRoot, id);
+    const plugin = await resolveModrinthPluginDownload(
+      projectId,
+      server.version,
+    );
+    pluginFilename(plugin.filename);
+    const response = await fetch(plugin.url, modrinthRequest);
+    if (!response.ok) {
+      throw new Error(`Plugin download failed (${response.status}).`);
+    }
+    return addDownloadedPlugin(
+      serverRoot,
+      id,
+      plugin.filename,
+      new Uint8Array(await response.arrayBuffer()),
+    );
+  },
+);
 ipcMain.handle("server:start", async (_, id: string) => {
   if (deletingServers.has(id)) throw new Error("This server is being deleted.");
   if (processes.has(id) || startingServers.has(id)) return;
