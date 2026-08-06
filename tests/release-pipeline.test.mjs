@@ -79,7 +79,13 @@ test("pull-request CI enforces Conventional Commits and packages Windows", () =>
   assert.match(workflow, /commitlint/);
   assert.match(workflow, /npm test/);
   assert.match(workflow, /npm run package:win/);
-  assert.match(workflow, /actions\/upload-artifact@v4/);
+  assert.match(workflow, /actions\/checkout@v6/);
+  assert.match(workflow, /actions\/setup-node@v6/);
+  assert.match(workflow, /actions\/upload-artifact@v6/);
+  assert.doesNotMatch(
+    workflow,
+    /actions\/(?:checkout|setup-node|upload-artifact)@v4/,
+  );
   assert.doesNotMatch(workflow, /^\s{0,2}push:/m);
 });
 
@@ -95,6 +101,8 @@ test("main releases run serially after the full test suite", () => {
   assert.match(workflow, /cancel-in-progress: false/);
   assert.match(workflow, /runs-on: windows-latest/);
   assert.match(workflow, /fetch-depth: 0/);
+  assert.match(workflow, /actions\/checkout@v6/);
+  assert.match(workflow, /actions\/setup-node@v6/);
   assert.match(workflow, /npm ci/);
   assert.match(workflow, /npm test/);
   assert.match(workflow, /npm run release/);
