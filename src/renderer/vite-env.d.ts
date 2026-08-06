@@ -46,6 +46,7 @@ declare global {
         query: string,
         sort: ModrinthSort,
       ): Promise<ModrinthPlugin[]>;
+      openModrinthPlugin(slug: string): Promise<void>;
       installModrinthPlugin(
         id: string,
         projectId: string,

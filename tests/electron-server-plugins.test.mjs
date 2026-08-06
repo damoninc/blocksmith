@@ -16,6 +16,7 @@ import {
   pluginFilename,
 } from "../dist/main/server-plugins.js";
 import {
+  modrinthPluginPageUrl,
   resolveModrinthPluginDownload,
   searchModrinthPlugins,
 } from "../dist/main/modrinth-plugins.js";
@@ -190,6 +191,28 @@ test("Modrinth search rejects unsupported catalog sorts", async () => {
     /invalid Modrinth sort/i,
   );
   assert.equal(requested, false);
+});
+
+test("Modrinth project links are constructed from safe slugs", () => {
+  assert.equal(
+    modrinthPluginPageUrl("worldedit"),
+    "https://modrinth.com/plugin/worldedit",
+  );
+  assert.equal(
+    modrinthPluginPageUrl("project-with-spaces-not-allowed"),
+    "https://modrinth.com/plugin/project-with-spaces-not-allowed",
+  );
+});
+
+test("Modrinth project links reject unsafe slugs", () => {
+  assert.throws(
+    () => modrinthPluginPageUrl("../account"),
+    /invalid Modrinth project/i,
+  );
+  assert.throws(
+    () => modrinthPluginPageUrl("https://example.com"),
+    /invalid Modrinth project/i,
+  );
 });
 
 test("Modrinth install selects the primary JAR from a compatible release", async () => {

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
@@ -42,6 +42,7 @@ import {
   type PluginUpload,
 } from "./server-plugins";
 import {
+  modrinthPluginPageUrl,
   modrinthRequest,
   resolveModrinthPluginDownload,
   searchModrinthPlugins,
@@ -391,6 +392,9 @@ ipcMain.handle(
     const { metadata: server } = await paperServerMetadata(serverRoot, id);
     return searchModrinthPlugins(server.version, query, sort);
   },
+);
+ipcMain.handle("plugins:openModrinth", (_, slug: string) =>
+  shell.openExternal(modrinthPluginPageUrl(slug)),
 );
 ipcMain.handle(
   "plugins:installModrinth",

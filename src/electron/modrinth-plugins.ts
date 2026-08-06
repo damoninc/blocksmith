@@ -1,5 +1,6 @@
 const API_ROOT = "https://api.modrinth.com/v2";
 const CDN_ROOT = "https://cdn.modrinth.com";
+const PROJECT_SLUG = /^[\w!@$().+,"'-]{3,64}$/;
 
 export const modrinthRequest = {
   headers: {
@@ -56,6 +57,11 @@ function validateModrinthSort(sort: string): ModrinthSort {
   return sort;
 }
 
+export function modrinthPluginPageUrl(slug: string): string {
+  if (!PROJECT_SLUG.test(slug)) throw new Error("Invalid Modrinth project.");
+  return `https://modrinth.com/plugin/${encodeURIComponent(slug)}`;
+}
+
 export async function searchModrinthPlugins(
   gameVersion: string,
   query: string,
@@ -94,7 +100,7 @@ export async function resolveModrinthPluginDownload(
   gameVersion: string,
   request: typeof fetch = fetch,
 ): Promise<{ url: string; filename: string }> {
-  if (!/^[\w!@$().+,"'-]{3,64}$/.test(projectId)) {
+  if (!PROJECT_SLUG.test(projectId)) {
     throw new Error("Invalid Modrinth project.");
   }
   const params = new URLSearchParams({
