@@ -6,6 +6,10 @@ import {
   parseServerProperties,
   type CommonServerProperties,
 } from "./server-properties";
+import {
+  normalizeServerLaunchSettings,
+  type ServerLaunchSettings,
+} from "./server-launch";
 
 export type ServerType = "vanilla" | "paper" | "fabric" | "forge";
 export type ServerMetadata = {
@@ -18,8 +22,10 @@ export type ServerMetadata = {
   build?: number;
   loader?: string;
   forgeVersion?: string;
+  launch?: ServerLaunchSettings;
 };
-export type ServerDetails = ServerMetadata & {
+export type ServerDetails = Omit<ServerMetadata, "launch"> & {
+  launch: ServerLaunchSettings;
   properties: CommonServerProperties;
   advancedProperties: string;
   eulaAccepted: boolean;
@@ -45,6 +51,7 @@ export async function readServerDetails(directory: string): Promise<ServerDetail
   const parsed = parseServerProperties(propertiesText);
   return {
     ...metadata,
+    launch: normalizeServerLaunchSettings(metadata.launch),
     properties: parsed.common,
     advancedProperties: parsed.advanced,
     eulaAccepted: parseEula(eulaText),

@@ -3,10 +3,11 @@ import { ConsoleTab } from "../components/server/ConsoleTab";
 import { ModsTab } from "../components/server/ModsTab";
 import { OverviewTab } from "../components/server/OverviewTab";
 import { PropertiesTab } from "../components/server/PropertiesTab";
+import { StartupTab } from "../components/server/StartupTab";
 import { ServerManagementDialogs } from "../components/server/ServerManagementDialogs";
 import type { ServerDetails, ServerTab } from "../types";
 
-const tabs: ServerTab[] = ["overview", "properties", "mods", "console"];
+const tabs: ServerTab[] = ["overview", "startup", "properties", "mods", "console"];
 
 type ServerViewProps = {
   root: string;
@@ -21,6 +22,7 @@ type ServerViewProps = {
   onNotify: (message: string) => void;
   onStart: () => void;
   onStop: () => void;
+  onCommand: (command: string) => Promise<void>;
   onModsChange: (mods: string[]) => void;
 };
 
@@ -37,6 +39,7 @@ export function ServerView({
   onNotify,
   onStart,
   onStop,
+  onCommand,
   onModsChange,
 }: ServerViewProps) {
   const [managementMode, setManagementMode] = useState<"rename" | "delete" | null>(null);
@@ -95,10 +98,21 @@ export function ServerView({
           onNotify={onNotify}
         />
       )}
+      {tab === "startup" && (
+        <StartupTab
+          key={server.id}
+          server={server}
+          running={running}
+          onServerChange={onServerChange}
+          onNotify={onNotify}
+        />
+      )}
       {tab === "mods" && (
         <ModsTab server={server} mods={mods} onChange={onModsChange} />
       )}
-      {tab === "console" && <ConsoleTab logs={logs} />}
+      {tab === "console" && (
+        <ConsoleTab logs={logs} running={running} onCommand={onCommand} />
+      )}
       {managementMode && (
         <ServerManagementDialogs
           key={`${server.id}-${managementMode}`}

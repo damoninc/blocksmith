@@ -62,6 +62,24 @@ test("starting a server switches to Console before invoking Electron", async () 
   assert.match(source, /setServerLogs/);
 });
 
+test("startup settings and the live console expose launch controls", async () => {
+  const [startup, consoleSource, preload] = await Promise.all([
+    readFile("src/renderer/components/server/StartupTab.tsx", "utf8"),
+    readFile("src/renderer/components/server/ConsoleTab.tsx", "utf8"),
+    readFile("src/electron/preload.ts", "utf8"),
+  ]);
+
+  assert.match(startup, /Java \/ JVM arguments/);
+  assert.match(startup, /Server arguments/);
+  assert.match(startup, /saveLaunch/);
+  assert.match(startup, /disabled=\{running \|\| saving\}/);
+  assert.match(consoleSource, /Server command/);
+  assert.match(consoleSource, /onCommand\(command\)/);
+  assert.match(consoleSource, /disabled=\{!running \|\| sending/);
+  assert.match(preload, /server:saveLaunch/);
+  assert.match(preload, /server:command/);
+});
+
 test("async server updates are guarded and file errors stay visible", async () => {
   const [app, overview, properties] = await Promise.all([
     readFile("src/renderer/App.tsx", "utf8"),

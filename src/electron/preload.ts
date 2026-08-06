@@ -14,10 +14,14 @@ contextBridge.exposeInMainWorld("blocksmith", {
     ipcRenderer.invoke("server:saveProperties", id, common, advanced),
   setEula: (id: string, accepted: boolean) =>
     ipcRenderer.invoke("server:eula", id, accepted),
+  saveLaunch: (id: string, launch: unknown) =>
+    ipcRenderer.invoke("server:saveLaunch", id, launch),
   mods: (id: string) => ipcRenderer.invoke("server:mods", id),
   addMod: (id: string) => ipcRenderer.invoke("server:addMod", id),
   start: (id: string) => ipcRenderer.invoke("server:start", id),
   stop: (id: string) => ipcRenderer.invoke("server:stop", id),
+  command: (id: string, command: string) =>
+    ipcRenderer.invoke("server:command", id, command),
   onLog: (callback: (id: string, text: string) => void) =>
     ipcRenderer.on("server:log", (_, ...args) => callback(args[0], args[1])),
   onStopped: (callback: (id: string, code: number | null) => void) =>

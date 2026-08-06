@@ -69,6 +69,9 @@ test("start and delete reserve a server before asynchronous work", async () => {
   assert.match(source, /const deletingServers = new Set<string>\(\)/);
   assert.match(source, /startingServers\.has\(id\)/);
   assert.match(source, /deletingServers\.has\(id\)/);
-  assert.match(source, /startingServers\.add\(id\)[\s\S]*await metadata\(id\)/);
+  assert.match(
+    source,
+    /startingServers\.add\(id\)[\s\S]*await managedServerDirectory\(serverRoot, id\)[\s\S]*await metadata\(directory\)/,
+  );
   assert.match(source, /deletingServers\.add\(id\)[\s\S]*await deleteServer/);
 });

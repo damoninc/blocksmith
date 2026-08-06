@@ -11,7 +11,7 @@
     "build:main": "tsc -p tsconfig.main.json",
     "build": "npm run build:main && vite build",
     "test:renderer": "vite build && node --test tests/renderer-*.test.mjs && npm run test:renderer:component",
-    "test:renderer:component": "vitest run --root . tests/create-server-view.test.tsx",
+    "test:renderer:component": "vitest run --root . tests/create-server-view.test.tsx tests/server-runtime-view.test.tsx",
     "test:server-creation": "node --test tests/server-creation.test.mjs",
     "test:electron": "npm run build:main && node --test tests/electron-*.test.mjs",
     "test": "npm run test:electron && npm run test:renderer && npm run test:server-creation && npm run test:release",

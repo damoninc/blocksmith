@@ -93,6 +93,10 @@ test("loads unified details from Minecraft files", async () => {
     assert.equal(details.eulaAccepted, true);
     assert.equal(details.properties.motd, "Home");
     assert.equal(details.advancedProperties, "resource-pack=pack");
+    assert.deepEqual(details.launch, {
+      javaArgs: "-Xms1G -Xmx2G",
+      serverArgs: "nogui",
+    });
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
