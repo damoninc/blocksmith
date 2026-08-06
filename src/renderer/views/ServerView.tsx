@@ -3,12 +3,10 @@ import { ConsoleTab } from "../components/server/ConsoleTab";
 import { ModsTab } from "../components/server/ModsTab";
 import { OverviewTab } from "../components/server/OverviewTab";
 import { PropertiesTab } from "../components/server/PropertiesTab";
+import { PluginsTab } from "../components/server/PluginsTab";
 import { StartupTab } from "../components/server/StartupTab";
 import { ServerManagementDialogs } from "../components/server/ServerManagementDialogs";
 import type { ServerDetails, ServerTab } from "../types";
-
-const tabs: ServerTab[] = ["overview", "startup", "properties", "mods", "console"];
-
 type ServerViewProps = {
   root: string;
   server: ServerDetails;
@@ -16,6 +14,7 @@ type ServerViewProps = {
   running: boolean;
   logs: string;
   mods: string[];
+  plugins: string[];
   onTabChange: (tab: ServerTab) => void;
   onServerChange: (server: ServerDetails) => void;
   onServerDeleted: (id: string) => void;
@@ -24,6 +23,7 @@ type ServerViewProps = {
   onStop: () => void;
   onCommand: (command: string) => Promise<void>;
   onModsChange: (mods: string[]) => void;
+  onPluginsChange: (plugins: string[]) => void;
 };
 
 export function ServerView({
@@ -33,6 +33,7 @@ export function ServerView({
   running,
   logs,
   mods,
+  plugins,
   onTabChange,
   onServerChange,
   onServerDeleted,
@@ -41,8 +42,20 @@ export function ServerView({
   onStop,
   onCommand,
   onModsChange,
+  onPluginsChange,
 }: ServerViewProps) {
   const [managementMode, setManagementMode] = useState<"rename" | "delete" | null>(null);
+  const tabs: ServerTab[] = [
+    "overview",
+    "startup",
+    "properties",
+    ...(server.type === "paper"
+      ? (["plugins"] as const)
+      : server.type === "fabric" || server.type === "forge"
+        ? (["mods"] as const)
+        : []),
+    "console",
+  ];
 
   return (
     <section>
@@ -109,6 +122,14 @@ export function ServerView({
       )}
       {tab === "mods" && (
         <ModsTab server={server} mods={mods} onChange={onModsChange} />
+      )}
+      {tab === "plugins" && server.type === "paper" && (
+        <PluginsTab
+          server={server}
+          plugins={plugins}
+          onChange={onPluginsChange}
+          onNotify={onNotify}
+        />
       )}
       {tab === "console" && (
         <ConsoleTab logs={logs} running={running} onCommand={onCommand} />
