@@ -1,6 +1,7 @@
 {
   "name": "blocksmith-server-manager",
   "version": "1.0.0",
+  "private": true,
   "description": "A local Minecraft server manager",
   "main": "dist/main/main.js",
   "author": "Damon",
@@ -13,21 +14,28 @@
     "test:renderer:component": "vitest run --root . tests/create-server-view.test.tsx",
     "test:server-creation": "node --test tests/server-creation.test.mjs",
     "test:electron": "npm run build:main && node --test tests/electron-*.test.mjs",
-    "test": "npm run test:electron && npm run test:renderer && npm run test:server-creation",
+    "test": "npm run test:electron && npm run test:renderer && npm run test:server-creation && npm run test:release",
+    "test:release": "node --test tests/release-pipeline.test.mjs",
+    "release": "semantic-release",
     "start": "npm run build && electron .",
     "package:win": "npm run build && electron-builder --win portable"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.0",
+    "@semantic-release/exec": "^7.1.0",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "concurrently": "^9.2.1",
+    "conventional-changelog-conventionalcommits": "9.3.1",
     "cross-env": "^10.1.0",
     "electron": "^39.2.7",
     "electron-builder": "^26.3.0",
     "jsdom": "^29.1.1",
+    "semantic-release": "25.0.9",
     "typescript": "^5.9.3",
     "vite": "^7.2.6",
     "vitest": "^4.1.10",
@@ -40,7 +48,14 @@
   "build": {
     "appId": "com.damon.blocksmith",
     "productName": "Blocksmith",
-    "files": ["dist/**/*", "package.json"],
-    "win": { "target": ["portable"] }
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ]
+    }
   }
 }

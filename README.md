@@ -22,6 +22,12 @@ npm run package:win
 
 The portable Windows executable will be written to `dist/`.
 
+## Contributions and releases
+
+Pull request titles and commits must follow [Conventional Commits](https://www.conventionalcommits.org/). Use `fix:` for a patch release, `feat:` for a minor release, and `!` or a `BREAKING CHANGE:` footer for a major release. Types such as `docs:`, `test:`, `chore:`, and `ci:` pass validation but do not create a release by themselves.
+
+Pull requests run the full test suite and a Windows packaging check. After a releasable change reaches `main`, semantic-release calculates the next version, creates the matching GitHub tag and release notes, and attaches the versioned portable Windows executable to the GitHub Release.
+
 ## Notes
 
 - Forge's official installer is downloaded and run locally to install a server.
